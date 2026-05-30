@@ -11,6 +11,7 @@ function App() {
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [selectedCardId, setSelectedCardId] = React.useState(null);
   const [checkedInMemberId, setCheckedInMemberId] = React.useState(null);
+  const [cancellingCard, setCancellingCard] = React.useState(null);
   const [showCheatsheet, setShowCheatsheet] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
 
@@ -29,7 +30,8 @@ function App() {
     function checkReset() {
       const today = FabData.todayStr();
       if (state.lastReset && state.lastReset !== today) {
-        setState(s => FabData.archiveDoneCards(s));
+        const now = new Date();
+        setState(s => FabData.performDailyReset(s, now));
       }
     }
     checkReset();
@@ -273,12 +275,56 @@ function App() {
     setEditingCard(null);
   }
 
+  function archiveCompletedCard(s, card) {
+    const overtime = !!(card.startedAt && card.completedAt && card.estMin &&
+      (new Date(card.completedAt) - new Date(card.startedAt)) > card.estMin * 60000);
+    const enriched = { ...card, overtime };
+    const date = card.completedAt
+      ? new Date(card.completedAt).toISOString().slice(0, 10)
+      : FabData.todayStr();
+    const completedTasks = [...(s.completedTasks || [])];
+    const idx = completedTasks.findIndex(e => e.date === date);
+    if (idx !== -1) {
+      completedTasks[idx] = {
+        ...completedTasks[idx],
+        cards: [...completedTasks[idx].cards, enriched],
+      };
+    } else {
+      completedTasks.push({ date, cards: [enriched] });
+    }
+    return { ...s, cards: s.cards.filter(c => c.id !== card.id), completedTasks };
+  }
+
   function deleteCard(cardId) {
-    setState(s => ({
-      ...s,
-      cards: s.cards.filter(c => c.id !== cardId),
-    }));
-    setEditingCard(null);
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) { setEditingCard(null); return; }
+    setEditingCard(null); // always close edit modal first
+    if (card.col === 'done') {
+      setState(s => archiveCompletedCard(s, card));
+    } else {
+      setCancellingCard(card); // opens CancelReasonModal
+    }
+  }
+
+  function onConfirmCancel(cardId, reason) {
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) { setCancellingCard(null); return; }
+    const date = FabData.todayStr();
+    const archived = { ...card, cancelReason: reason || '' };
+    setState(s => {
+      const cancelledTasks = [...(s.cancelledTasks || [])];
+      const idx = cancelledTasks.findIndex(e => e.date === date);
+      if (idx !== -1) {
+        cancelledTasks[idx] = {
+          ...cancelledTasks[idx],
+          cards: [...cancelledTasks[idx].cards, archived],
+        };
+      } else {
+        cancelledTasks.push({ date, cards: [archived] });
+      }
+      return { ...s, cards: s.cards.filter(c => c.id !== cardId), cancelledTasks };
+    });
+    setCancellingCard(null);
   }
 
   function reassignCard(cardId, newOwnerId) {
@@ -343,15 +389,22 @@ function App() {
         />
       )}
 
-      {editingCard && (
-        <CardModal
-          state={state} editingCard={editingCard}
-          onClose={() => setEditingCard(null)}
-          onSave={editCard}
-          onDelete={deleteCard}
-          onReassign={reassignCard}
-        />
-      )}
+      {cancellingCard
+        ? <CancelReasonModal
+            card={cancellingCard}
+            lang={state.lang || 'en'}
+            onConfirm={onConfirmCancel}
+            onClose={() => setCancellingCard(null)}
+          />
+        : editingCard
+          ? <CardModal
+              state={state} editingCard={editingCard}
+              onClose={() => setEditingCard(null)}
+              onSave={editCard}
+              onDelete={deleteCard}
+              onReassign={reassignCard}
+            />
+          : null}
 
       {showCheatsheet && <Cheatsheet onClose={() => setShowCheatsheet(false)} lang={state.lang || 'en'} />}
 
