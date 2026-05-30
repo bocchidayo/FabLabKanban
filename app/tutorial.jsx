@@ -1,7 +1,7 @@
 /* ============================================================
    FABLAB UTP — On-demand tutorial overlay
    Spotlight + tooltip walkthrough. Pure CSS/JS, no libraries.
-   7 steps, skippable at any time, no forced onboarding.
+   8 steps, skippable at any time, no forced onboarding.
    ============================================================ */
 const t = window.I18n ? window.I18n.t : function(k) { return k; };
 
@@ -34,31 +34,38 @@ function Tutorial({ onClose, lang = 'en' }) {
     },
     {
       title: t('tut.step4_title', lang),
-      selector: ".add-task:first-of-type",
-      fallback: ".column-body:first-of-type",
-      position: "above",
+      selector: ".popover-wrap",
+      fallback: ".topbar",
+      position: "below",
       text: t('tut.step4_text', lang),
     },
     {
       title: t('tut.step5_title', lang),
-      selector: ".column-body:nth-of-type(2) .card:first-child",
-      fallback: ".board",
-      position: "right",
+      selector: ".add-task:first-of-type",
+      fallback: ".column-body:first-of-type",
+      position: "above",
       text: t('tut.step5_text', lang),
     },
     {
       title: t('tut.step6_title', lang),
-      selector: ".claim-btn:first-of-type",
-      fallback: ".column-body:nth-of-type(2)",
+      selector: ".column-body:nth-of-type(2) .card:first-child",
+      fallback: ".board",
       position: "right",
       text: t('tut.step6_text', lang),
     },
     {
       title: t('tut.step7_title', lang),
+      selector: ".claim-btn:first-of-type",
+      fallback: ".column-body:nth-of-type(2)",
+      position: "right",
+      text: t('tut.step7_text', lang),
+    },
+    {
+      title: t('tut.step8_title', lang),
       selector: ".board",
       fallback: ".app",
       position: "center",
-      text: t('tut.step7_text', lang),
+      text: t('tut.step8_text', lang),
     },
   ];
 
