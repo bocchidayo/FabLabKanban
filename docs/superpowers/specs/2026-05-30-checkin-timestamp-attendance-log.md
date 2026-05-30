@@ -51,14 +51,18 @@ if (!state.attendance) state.attendance = [];
 state.members.forEach(m => { if (!('checkedInAt' in m)) m.checkedInAt = null; });
 ```
 
-### 1.4 `reset()` and `startFresh()` — wipe attendance
+### 1.4 `reset()` and `startFresh()` — wipe attendance and reset presence state
 
-Both operations wipe `attendance: []`, same as `archived`. Implement by:
+Both operations must:
 
-- `reset()`: `load()` returns seed state; the migration in `load()` sets `attendance: []` if missing — but seed state must explicitly include `attendance: []`.
-- `startFresh()` / `buildEmpty()`: add `attendance: []` to the object returned by `buildEmpty()`.
+1. Set `attendance: []` (same as `archived: []`)
+2. Reset every member to `checkedIn: false, checkedInAt: null`
 
-Open sessions don't accumulate across resets because attendance is wiped entirely. Members with `checkedIn: true` in seed data will have `checkedInAt: null` (from the migration) — they appear as checked in without a time chip, which is correct for the reset default state.
+The seed members in `data.js` (`buildSeed`) currently hard-code `checkedIn: true` for several members. **Remove those `checkedIn` fields from the seed** — presence is operational state, not seed data. After `reset()` all members start unchecked.
+
+`buildEmpty()` already produces an empty members array so no change needed there, but it must also include `attendance: []` explicitly.
+
+This ensures the topbar, the member strip, and the attendance table are all consistent immediately after a reset — no member appears present without an attendance record.
 
 ---
 
@@ -253,7 +257,7 @@ Filename: `fablab-asistencia-YYYY-MM-DD.csv` for the selected day.
 |------|---------|
 | Midnight rollover | `checkOut` search uses no date filter — finds the most recent open entry regardless of `date` |
 | Multiple sessions same day | Each check-in pushes a new entry; the table shows them as separate rows |
-| Reset / startFresh with open sessions | `attendance` is wiped to `[]` along with all other data; open sessions are gone with it |
+| Reset / startFresh with open sessions | `attendance` wiped to `[]`; all members reset to `checkedIn: false, checkedInAt: null`; seed no longer ships members pre-checked |
 | `fmtDuration(0)` | `checkIn === checkOut` yields `"0m"` — acceptable edge |
 | Member deleted with open session | Orphaned entry stays in attendance log with no matching member; the table skips rows whose `memberId` has no matching member in `state.members` |
 | Cross-midnight duration | Guard: if `h2*60+m2 < h1*60+m1`, add 1440 mins before computing |
