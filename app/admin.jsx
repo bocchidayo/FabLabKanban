@@ -1,7 +1,7 @@
 // Fablab Kanban Admin Panel — React 18 components
 // Compiled by Babel standalone. All function components using hooks.
 
-const { Icon, Avatar } = window;
+const { Icon, Avatar, MachineTag } = window;
 const FabData = window.FabData;
 const t = window.I18n ? window.I18n.t : function(k) { return k; };
 
@@ -172,6 +172,166 @@ function AddMember({ onAdd, lang }) {
 }
 
 // ---------------------------------------------------------------------------
+// CompletedTasksPanel — tasks archived from the Done column, by day
+// ---------------------------------------------------------------------------
+function CompletedTasksPanel({ state, lang }) {
+  const groups = state.completedTasks || [];
+
+  const [selectedDate, setSelectedDate] = React.useState(() => {
+    if (groups.length === 0) return FabData.todayStr();
+    return [...groups].map(g => g.date).sort().pop();
+  });
+
+  const entries = React.useMemo(() => {
+    const group = groups.find(g => g.date === selectedDate);
+    return group ? group.cards : [];
+  }, [groups, selectedDate]);
+
+  function getMember(id) {
+    return (state.members || []).find(m => m.id === id);
+  }
+
+  function calcDurationMin(card) {
+    if (!card.startedAt || !card.completedAt) return null;
+    return Math.round((new Date(card.completedAt) - new Date(card.startedAt)) / 60000);
+  }
+
+  function fmtCompletedAt(card) {
+    if (!card.completedAt) return '—';
+    return FabData.fmtHHMM(new Date(card.completedAt));
+  }
+
+  const escCSV = val => '"' + (val || '').toString().replace(/"/g, '""') + '"';
+
+  const exportCSV = () => {
+    const header = ['fecha','tarea','prioridad','maquina','owner','asistentes','estimado_min','duracion_min','sobretiempo_min','completado_a'];
+    const rows = [header];
+    entries.forEach(c => {
+      const owner = getMember(c.owner);
+      const assistantNames = (c.assistants || []).map(id => {
+        const m = getMember(id);
+        return m ? m.name : id;
+      }).join('|');
+      const durationMin = calcDurationMin(c);
+      const overtimeMin = durationMin !== null ? durationMin - (c.estMin || 0) : null;
+      rows.push([
+        selectedDate,
+        escCSV(c.title),
+        c.priority || '',
+        c.machine || '',
+        escCSV(owner ? owner.name : c.owner),
+        escCSV(assistantNames),
+        c.estMin || '',
+        durationMin !== null ? durationMin : '',
+        overtimeMin !== null ? overtimeMin : '',
+        fmtCompletedAt(c),
+      ]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fablab-completadas-' + selectedDate + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <h3>{t('admin.completed_title', lang)}</h3>
+        <p>{t('admin.completed_desc', lang)}</p>
+      </div>
+      <div className="panel-body">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>
+            {t('admin.completed_date', lang)}
+          </label>
+          <input
+            type="date"
+            className="input"
+            value={selectedDate}
+            onChange={e => setSelectedDate(e.target.value)}
+            style={{ width: 160, height: 36 }}
+          />
+        </div>
+
+        {entries.length === 0 ? (
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>{t('admin.completed_empty', lang)}</p>
+        ) : (
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th>{/* title + owner + assistants */}</th>
+                <th>{t('admin.completed_estimated', lang)}</th>
+                <th>{t('admin.completed_duration', lang)}</th>
+                <th>{t('admin.completed_at', lang)}</th>
+                <th>{t('admin.completed_overtime', lang)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((c, i) => {
+                const owner = getMember(c.owner);
+                const durationMin = calcDurationMin(c);
+                const overtimeMin = durationMin !== null ? durationMin - (c.estMin || 0) : null;
+                return (
+                  <tr key={c.id || i}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {owner && <Avatar member={owner} size="sm" />}
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>
+                            {owner ? owner.name : (c.owner || '—')}
+                          </span>
+                          {c.priority && <span className={'pri ' + c.priority} title={c.priority} />}
+                          {c.machine && MachineTag && <MachineTag machineId={c.machine} />}
+                        </div>
+                        <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{c.title}</span>
+                        {(c.assistants || []).length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {c.assistants.map(id => {
+                              const m = getMember(id);
+                              return m ? <Avatar key={id} member={m} size="sm" /> : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 13, color: 'var(--text-3)' }}>
+                      {c.estMin ? FabData.fmtDuration(c.estMin * 60000) : '—'}
+                    </td>
+                    <td style={{ fontSize: 13, fontWeight: 600 }}>
+                      {durationMin !== null ? FabData.fmtDuration(durationMin * 60000) : '—'}
+                    </td>
+                    <td style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                      {fmtCompletedAt(c)}
+                    </td>
+                    <td>
+                      {c.overtime && overtimeMin !== null && overtimeMin > 0 ? (
+                        <span className="overtime-badge">+{FabData.fmtDuration(overtimeMin * 60000)}</span>
+                      ) : (
+                        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {entries.length > 0 && (
+          <button className="btn btn-accent" onClick={exportCSV} style={{ marginTop: 14 }}>
+            {t('admin.completed_export', lang)}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // AttendancePanel — daily check-in / check-out log
 // ---------------------------------------------------------------------------
 function AttendancePanel({ state, lang }) {
@@ -325,25 +485,6 @@ function Admin({ state, setState, onClose }) {
     return () => clearTimeout(timer);
   }, [saved]);
 
-  // All hooks must be above any conditional return (Rules of Hooks)
-  const archiveEntries = React.useMemo(() => {
-    const a = state.archived;
-    if (!a || a.length === 0) return [];
-    return [...a].sort((x, y) => new Date(y.date) - new Date(x.date));
-  }, [state.archived]);
-
-  const [archiveFrom, setArchiveFrom] = React.useState('');
-  const [archiveTo,   setArchiveTo]   = React.useState('');
-
-  const filteredArchiveEntries = React.useMemo(() => {
-    if (!archiveFrom && !archiveTo) return archiveEntries;
-    return archiveEntries.filter(function (entry) {
-      if (archiveFrom && entry.date < archiveFrom) return false;
-      if (archiveTo   && entry.date > archiveTo)   return false;
-      return true;
-    });
-  }, [archiveEntries, archiveFrom, archiveTo]);
-
   // Lab settings local state
   const [labName, setLabName] = React.useState(state.lab || '');
   const [idleMin, setIdleMin] = React.useState(state.idleMinutes || 3);
@@ -451,23 +592,6 @@ function Admin({ state, setState, onClose }) {
     setSaved(true);
   };
 
-  // ---- Archived tasks (continued) ----------------------------------------
-  const hasArchived = archiveEntries.length > 0;
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const getMemberName = (ownerId) => {
-    const m = (state.members || []).find(m => m.id === ownerId);
-    return m ? m.name : t('admin.unknown_member', lang);
-  };
-
   // ---- Export helpers ----------------------------------------------------
   const escCSV = (val) => {
     const s = (val || '').toString();
@@ -534,8 +658,6 @@ function Admin({ state, setState, onClose }) {
       FabData.save(fresh);
       setState(fresh);
       setPasswordValue(fresh.password || '');
-      setArchiveFrom('');
-      setArchiveTo('');
     }
   };
 
@@ -718,62 +840,8 @@ function Admin({ state, setState, onClose }) {
             </div>
           </div>
 
-          {/* ---- Archived tasks ---------------------------------------- */}
-          <div className="panel">
-            <div className="panel-head">
-              <h3>{t('admin.archive_title', lang)}</h3>
-              <p>{t('admin.archive_desc', lang)}</p>
-            </div>
-            <div className="panel-body">
-              {hasArchived && (
-                <div className="archive-filter">
-                  <label className="archive-filter-label">{t('admin.archive_from', lang)}</label>
-                  <input
-                    className="input"
-                    type="date"
-                    value={archiveFrom}
-                    onChange={e => setArchiveFrom(e.target.value)}
-                  />
-                  <label className="archive-filter-label">{t('admin.archive_to', lang)}</label>
-                  <input
-                    className="input"
-                    type="date"
-                    value={archiveTo}
-                    onChange={e => setArchiveTo(e.target.value)}
-                  />
-                  {(archiveFrom || archiveTo) && (
-                    <button
-                      className="btn"
-                      style={{ height: 36, padding: '0 10px', fontSize: 13 }}
-                      onClick={() => { setArchiveFrom(''); setArchiveTo(''); }}
-                    >
-                      × {t('admin.archive_clear', lang)}
-                    </button>
-                  )}
-                </div>
-              )}
-              {!hasArchived ? (
-                <p>{t('admin.archive_empty', lang)}</p>
-              ) : filteredArchiveEntries.length === 0 ? (
-                <p style={{ opacity: 0.6, fontSize: 13 }}>{t('admin.archive_none', lang)}</p>
-              ) : (
-                filteredArchiveEntries.map(entry => (
-                  <div key={entry.date} className="archive-group">
-                    <div className="archive-date">{formatDate(entry.date)}</div>
-                    {(entry.cards || []).map((card, i) => (
-                      <div key={card.id || i} className="archive-card">
-                        <span className="title">{card.title}</span>
-                        <span className="owner-name">{getMemberName(card.owner)}</span>
-                      </div>
-                    ))}
-                    <p style={{ marginTop: 4, fontSize: 13, opacity: 0.6 }}>
-                      {t('admin.archive_count', lang).replace('{n}', entry.cards ? entry.cards.length : 0).replace('{s}', (entry.cards ? entry.cards.length : 0) !== 1 ? 's' : '')}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          {/* ---- Completed tasks --------------------------------------- */}
+          <CompletedTasksPanel state={state} lang={lang} />
 
           {/* ---- Attendance log ---------------------------------------- */}
           <AttendancePanel state={state} lang={lang} />
