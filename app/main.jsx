@@ -198,6 +198,7 @@ function App() {
       id: FabData.uid(),
       col: data.col, title: data.title, desc: data.desc,
       priority: data.priority, machine: data.machine, owner: data.owner,
+      assistants: data.assistants || [],
       estMin: data.estMin || 120,
       createdAt: Date.now(),
     };
