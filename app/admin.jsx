@@ -185,7 +185,7 @@ function CompletedTasksPanel({ state, lang }) {
   const entries = React.useMemo(() => {
     const group = groups.find(g => g.date === selectedDate);
     return group ? group.cards : [];
-  }, [groups, selectedDate]);
+  }, [state.completedTasks, selectedDate]);
 
   function getMember(id) {
     return (state.members || []).find(m => m.id === id);
@@ -224,7 +224,7 @@ function CompletedTasksPanel({ state, lang }) {
         c.estMin || '',
         durationMin !== null ? durationMin : '',
         overtimeMin !== null ? overtimeMin : '',
-        fmtCompletedAt(c),
+        escCSV(fmtCompletedAt(c)),
       ]);
     });
     const csv = rows.map(r => r.join(',')).join('\n');
