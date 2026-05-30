@@ -332,6 +332,154 @@ function CompletedTasksPanel({ state, lang }) {
 }
 
 // ---------------------------------------------------------------------------
+// CancelledTasksPanel — tasks deleted outside Done column, with reason
+// ---------------------------------------------------------------------------
+function CancelledTasksPanel({ state, lang }) {
+  const groups = state.cancelledTasks || [];
+
+  const [selectedDate, setSelectedDate] = React.useState(() => {
+    if (groups.length === 0) return FabData.todayStr();
+    return [...groups].map(g => g.date).sort().pop();
+  });
+
+  const entries = React.useMemo(() => {
+    const group = groups.find(g => g.date === selectedDate);
+    return group ? group.cards : [];
+  }, [state.cancelledTasks, selectedDate]);
+
+  function getMember(id) {
+    return (state.members || []).find(m => m.id === id);
+  }
+
+  const COL_LABELS = {
+    backlog:    t('col.backlog',     lang),
+    ready:      t('col.ready',       lang),
+    inprogress: t('col.inprogress',  lang),
+    done:       t('col.done',        lang),
+  };
+
+  const escCSV = val => '"' + (val || '').toString().replace(/"/g, '""') + '"';
+
+  const exportCSV = () => {
+    const header = ['fecha','tarea','prioridad','maquina','owner','asistentes','columna','creado_en','razon'];
+    const rows = [header];
+    entries.forEach(c => {
+      const owner = getMember(c.owner);
+      const assistantNames = (c.assistants || []).map(id => {
+        const m = getMember(id);
+        return m ? m.name : id;
+      }).join('|');
+      rows.push([
+        selectedDate,
+        escCSV(c.title),
+        c.priority || '',
+        c.machine || '',
+        escCSV(owner ? owner.name : c.owner),
+        escCSV(assistantNames),
+        c.col || '',
+        c.createdAt || '',
+        escCSV(c.cancelReason || ''),
+      ]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fablab-canceladas-' + selectedDate + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <h3>{t('admin.cancelled_title', lang)}</h3>
+        <p>{t('admin.cancelled_desc', lang)}</p>
+      </div>
+      <div className="panel-body">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>
+            {t('admin.cancelled_date', lang)}
+          </label>
+          <input
+            type="date"
+            className="input"
+            value={selectedDate}
+            onChange={e => setSelectedDate(e.target.value)}
+            style={{ width: 160, height: 36 }}
+          />
+        </div>
+
+        {entries.length === 0 ? (
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>{t('admin.cancelled_empty', lang)}</p>
+        ) : (
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th>{/* title + owner */}</th>
+                <th>{t('admin.cancelled_column', lang)}</th>
+                <th>{t('admin.cancelled_created', lang)}</th>
+                <th>{t('admin.cancelled_reason', lang)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((c, i) => {
+                const owner = getMember(c.owner);
+                const createdAt = c.createdAt
+                  ? new Date(c.createdAt).toLocaleTimeString(lang === 'es' ? 'es' : 'en', { hour: '2-digit', minute: '2-digit', hour12: false })
+                  : '—';
+                return (
+                  <tr key={c.id || i}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {owner && <Avatar member={owner} size="sm" />}
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>
+                            {owner ? owner.name : (c.owner || '—')}
+                          </span>
+                          {c.priority && <span className={'pri ' + c.priority} title={c.priority} />}
+                        </div>
+                        <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{c.title}</span>
+                        {(c.assistants || []).length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {c.assistants.map(id => {
+                              const m = getMember(id);
+                              return m ? <Avatar key={id} member={m} size="sm" /> : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 13 }}>
+                      {COL_LABELS[c.col] || c.col || '—'}
+                    </td>
+                    <td style={{ fontSize: 13, color: 'var(--text-2)' }}>{createdAt}</td>
+                    <td style={{ fontSize: 13, color: c.cancelReason ? 'var(--text)' : 'var(--text-3)', maxWidth: 200 }}>
+                      {c.cancelReason
+                        ? c.cancelReason.length > 80
+                          ? c.cancelReason.slice(0, 80) + '…'
+                          : c.cancelReason
+                        : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {entries.length > 0 && (
+          <button className="btn btn-accent" onClick={exportCSV} style={{ marginTop: 14 }}>
+            {t('admin.cancelled_export', lang)}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // AttendancePanel — daily check-in / check-out log
 // ---------------------------------------------------------------------------
 function AttendancePanel({ state, lang }) {
@@ -842,6 +990,9 @@ function Admin({ state, setState, onClose }) {
 
           {/* ---- Completed tasks --------------------------------------- */}
           <CompletedTasksPanel state={state} lang={lang} />
+
+          {/* ---- Cancelled tasks --------------------------------------- */}
+          <CancelledTasksPanel state={state} lang={lang} />
 
           {/* ---- Attendance log ---------------------------------------- */}
           <AttendancePanel state={state} lang={lang} />
