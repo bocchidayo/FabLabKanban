@@ -34,9 +34,21 @@ In the `load()` function, after the existing migration guards, add:
 (state.cards || []).forEach(function (c) {
   if (!c.assistants) c.assistants = [];
 });
+(state.archived || []).forEach(function (day) {
+  (day.cards || []).forEach(function (c) {
+    if (!c.assistants) c.assistants = [];
+  });
+});
 ```
 
-`buildSeed()` cards already go through `seedCards.map(...)` — add `assistants: []` to each seed card definition. `buildEmpty()` produces `cards: []` so no change needed.
+`buildSeed()` — add `assistants: []` explicitly to every entry in `seedCards`:
+
+```js
+// app/data.js — each object in the seedCards array
+{ id: "c1", col: "backlog", title: "...", ..., assistants: [] },
+```
+
+`buildEmpty()` produces `cards: []` so no change needed.
 
 ---
 
@@ -175,6 +187,9 @@ const cols = ['id', 'title', 'column', 'priority', 'machine', 'owner', 'assistan
 | `field.assistants` | Assistants | Asistentes |
 | `field.assistants_hint` | Optional — tap to add | Opcional — toca para añadir |
 | `field.assistants_none` | No assistants | Sin asistentes |
+| `label.owner` | Owner | Responsable |
+| `label.team` | Team | Equipo |
+| `label.assistant` | Assistant | Asistente |
 
 ---
 
