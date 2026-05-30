@@ -67,6 +67,12 @@
     "field.minutes":             { en: "min",                      es: "min" },
 
     "field.reassign_owner":      { en: "Owner",                    es: "Responsable" },
+    "field.assistants":          { en: "Assistants",               es: "Asistentes" },
+    "field.assistants_hint":     { en: "Optional — tap to add",    es: "Opcional — toca para añadir" },
+    "field.assistants_none":     { en: "No assistants",            es: "Sin asistentes" },
+    "label.owner":               { en: "Owner",                    es: "Responsable" },
+    "label.team":                { en: "Team",                     es: "Equipo" },
+    "label.assistant":           { en: "Assistant",                es: "Asistente" },
 
     "action.cancel":             { en: "Cancel",                   es: "Cancelar" },
     "action.create_task":        { en: "Create task",              es: "Crear tarea" },
