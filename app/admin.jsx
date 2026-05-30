@@ -392,6 +392,8 @@ function Admin({ state, setState, onClose }) {
       FabData.save(fresh);
       setState(fresh);
       setPasswordValue(fresh.password || '');
+      setArchiveFrom('');
+      setArchiveTo('');
     }
   };
 
