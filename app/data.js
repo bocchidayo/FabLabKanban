@@ -122,7 +122,7 @@
     };
   }
 
-  function buildEmpty(machinesArray) {
+  function buildEmpty(machinesArray, lang) {
     var machines = (machinesArray || []).map(function (m) { return Object.assign({}, m); });
     syncMachines(machines);
     return {
@@ -134,7 +134,7 @@
       cards: [],
       archived: [],
       lastReset: todayStr(),
-      lang: "es",
+      lang: lang || 'es',
     };
   }
 
