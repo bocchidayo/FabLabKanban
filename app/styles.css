@@ -45,6 +45,7 @@
   --amber-soft: #fef3e0;
   --coral: #e8735a;
   --coral-soft: #fef0ed;
+  --ok-soft: #d3f9d8;
 
   --r: 8px;
   --r-sm: 6px;
@@ -160,6 +161,12 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 .checkin-toggle { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
 .checkin-toggle.in { background: var(--accent-soft); color: var(--accent); }
 .checkin-toggle.out { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+
+.checkin-time-chip { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
+
+.attendance-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+.attendance-table th { text-align: left; padding: 5px 8px; color: var(--text-3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+.attendance-table td { padding: 8px 8px; border-bottom: 1px solid var(--surface-2); vertical-align: middle; }
 
 /* ============================================================ AVATAR */
 .av {
