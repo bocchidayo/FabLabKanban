@@ -206,6 +206,19 @@
     "tut.next":                  { en: "Next",                     es: "Siguiente" },
     "tut.done":                  { en: "Done",                     es: "Listo" },
     "tut.skip":                  { en: "Skip tutorial",            es: "Saltar tutorial" },
+
+    // ---- attendance -------------------------------------------------------
+    "admin.attendance_title":    { en: "Attendance",                         es: "Asistencia" },
+    "admin.attendance_desc":     { en: "Check-in and check-out log by day.", es: "Registro de entradas y salidas por día." },
+    "admin.attendance_date":     { en: "Day",                                es: "Día" },
+    "admin.attendance_entry":    { en: "Entry",                              es: "Entrada" },
+    "admin.attendance_exit":     { en: "Exit",                               es: "Salida" },
+    "admin.attendance_duration": { en: "Duration",                           es: "Duración" },
+    "admin.attendance_active":   { en: "— active",                           es: "— activo" },
+    "admin.attendance_ongoing":  { en: "ongoing",                            es: "en curso" },
+    "admin.attendance_absent":   { en: "No check-in today",                  es: "Sin check-in hoy" },
+    "admin.attendance_export":   { en: "Export attendance CSV",              es: "Exportar CSV asistencia" },
+    "admin.attendance_empty":    { en: "No attendance records for this day.", es: "Sin registros de asistencia para este día." },
   };
 
   function t(key, lang) {
