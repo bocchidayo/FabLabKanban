@@ -62,14 +62,14 @@
 
   // ---- seed members ----------------------------------------------------
   const seedMembers = [
-    { id: "m1", name: "Aisha Rahman", initials: "AR", color: "#2b7fd4", checkedIn: true },
-    { id: "m2", name: "Marco Silva",  initials: "MS", color: "#25a04a", checkedIn: true },
-    { id: "m3", name: "Lena Vogt",    initials: "LV", color: "#7c5cfc", checkedIn: true },
-    { id: "m4", name: "Tom Becker",   initials: "TB", color: "#e23c34", checkedIn: true },
-    { id: "m5", name: "Priya Nair",   initials: "PN", color: "#0e9da0", checkedIn: true },
-    { id: "m6", name: "Jonas Weiss",  initials: "JW", color: "#c2255c", checkedIn: false },
-    { id: "m7", name: "Sara Khoury",  initials: "SK", color: "#f0a017", checkedIn: true },
-    { id: "m8", name: "Diego Torres", initials: "DT", color: "#495057", checkedIn: false },
+    { id: "m1", name: "Aisha Rahman", initials: "AR", color: "#2b7fd4", checkedIn: false, checkedInAt: null },
+    { id: "m2", name: "Marco Silva",  initials: "MS", color: "#25a04a", checkedIn: false, checkedInAt: null },
+    { id: "m3", name: "Lena Vogt",    initials: "LV", color: "#7c5cfc", checkedIn: false, checkedInAt: null },
+    { id: "m4", name: "Tom Becker",   initials: "TB", color: "#e23c34", checkedIn: false, checkedInAt: null },
+    { id: "m5", name: "Priya Nair",   initials: "PN", color: "#0e9da0", checkedIn: false, checkedInAt: null },
+    { id: "m6", name: "Jonas Weiss",  initials: "JW", color: "#c2255c", checkedIn: false, checkedInAt: null },
+    { id: "m7", name: "Sara Khoury",  initials: "SK", color: "#f0a017", checkedIn: false, checkedInAt: null },
+    { id: "m8", name: "Diego Torres", initials: "DT", color: "#495057", checkedIn: false, checkedInAt: null },
   ];
 
   // ---- seed cards ------------------------------------------------------
@@ -117,6 +117,7 @@
       machines: machines,
       cards: cards,
       archived: [],
+      attendance: [],
       lastReset: todayStr,
       lang: "en",
     };
@@ -133,6 +134,7 @@
       machines: machines,
       cards: [],
       archived: [],
+      attendance: [],
       lastReset: todayStr(),
       lang: lang || 'es',
     };
@@ -168,6 +170,10 @@
         (state.archived || []).forEach(function (day) {
           (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
         });
+        // Ensure attendance log exists
+        if (!state.attendance) state.attendance = [];
+        // Ensure all members have checkedInAt
+        state.members.forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
         // Sync globals so components see the loaded machines
         syncMachines(state.machines);
         save(state);
@@ -214,6 +220,10 @@
   }
 
   function uid() { return "x" + Math.random().toString(36).slice(2, 9); }
+
+  function fmtHHMM(date) {
+    return date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
 
   // ---- overdue / stale helpers -----------------------------------------
   function isOverdue(card, now) {
@@ -289,5 +299,6 @@
     todayStr: todayStr,
     archiveDoneCards: archiveDoneCards,
     getTodayDone: getTodayDone,
+    fmtHHMM: fmtHHMM,
   };
 })();
