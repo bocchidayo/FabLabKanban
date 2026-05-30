@@ -75,23 +75,23 @@
   // ---- seed cards ------------------------------------------------------
   const seedCards = [
     // backlog
-    { id: "c1", col: "backlog", title: "Laser-cut enclosure panels", desc: "3mm acrylic, 4 side panels + lid for the air-quality sensor box.", priority: "high", machine: "laser", owner: "m3", estMin: 45, createdMin: 95 },
-    { id: "c2", col: "backlog", title: "Design PCB for sensor node", desc: "Route the ESP32 carrier board, add USB-C and battery JST.", priority: "mid", machine: "elec", owner: "m5", estMin: 120, createdMin: 180 },
-    { id: "c3", col: "backlog", title: "Model replacement gear in CAD", desc: "Reverse-engineer the broken 18-tooth gear from the label printer.", priority: "low", machine: "soft", owner: "m7", estMin: 60, createdMin: 240 },
-    { id: "c4", col: "backlog", title: "Update lab safety signage", desc: "Refresh laser + soldering station warning posters for the new layout.", priority: "low", machine: null, owner: "m1", estMin: 30, createdMin: 320 },
+    { id: "c1", col: "backlog", title: "Laser-cut enclosure panels", desc: "3mm acrylic, 4 side panels + lid for the air-quality sensor box.", priority: "high", machine: "laser", owner: "m3", estMin: 45, createdMin: 95, assistants: [] },
+    { id: "c2", col: "backlog", title: "Design PCB for sensor node", desc: "Route the ESP32 carrier board, add USB-C and battery JST.", priority: "mid", machine: "elec", owner: "m5", estMin: 120, createdMin: 180, assistants: [] },
+    { id: "c3", col: "backlog", title: "Model replacement gear in CAD", desc: "Reverse-engineer the broken 18-tooth gear from the label printer.", priority: "low", machine: "soft", owner: "m7", estMin: 60, createdMin: 240, assistants: [] },
+    { id: "c4", col: "backlog", title: "Update lab safety signage", desc: "Refresh laser + soldering station warning posters for the new layout.", priority: "low", machine: null, owner: "m1", estMin: 30, createdMin: 320, assistants: [] },
     // ready
-    { id: "c5", col: "ready", title: "Print prototype bracket v3", desc: "PETG, 40% infill. Reinforced mounting tab from last review.", priority: "mid", machine: "print", owner: "m5", estMin: 180, createdMin: 60 },
-    { id: "c6", col: "ready", title: "Engrave wooden name tags", desc: "Batch of 24 birch tags for the weekend workshop attendees.", priority: "low", machine: "laser", owner: "m7", estMin: 45, createdMin: 130 },
-    { id: "c7", col: "ready", title: "Mill aluminum mounting plate", desc: "6061 stock, 4 holes + pocket. Fixture is already set up.", priority: "high", machine: "cnc", owner: "m2", estMin: 90, createdMin: 200 },
+    { id: "c5", col: "ready", title: "Print prototype bracket v3", desc: "PETG, 40% infill. Reinforced mounting tab from last review.", priority: "mid", machine: "print", owner: "m5", estMin: 180, createdMin: 60, assistants: [] },
+    { id: "c6", col: "ready", title: "Engrave wooden name tags", desc: "Batch of 24 birch tags for the weekend workshop attendees.", priority: "low", machine: "laser", owner: "m7", estMin: 45, createdMin: 130, assistants: [] },
+    { id: "c7", col: "ready", title: "Mill aluminum mounting plate", desc: "6061 stock, 4 holes + pocket. Fixture is already set up.", priority: "high", machine: "cnc", owner: "m2", estMin: 90, createdMin: 200, assistants: [] },
     // in progress
-    { id: "c8", col: "inprogress", title: "CNC cut acrylic dashboard sign", desc: "Reception wayfinding sign, 600x200mm.", priority: "mid", machine: "cnc", owner: "m2", estMin: 175, startedMin: 95 },
-    { id: "c9", col: "inprogress", title: "Solder LED driver board", desc: "Hand-place 0805 passives, then reflow the driver IC.", priority: "high", machine: "elec", owner: "m4", estMin: 90, startedMin: 38 },
-    { id: "c10", col: "inprogress", title: "3D print drone frame", desc: "Carbon-fill nylon, full arm set. Long job.", priority: "mid", machine: "print", owner: "m1", estMin: 180, startedMin: 142 },
+    { id: "c8", col: "inprogress", title: "CNC cut acrylic dashboard sign", desc: "Reception wayfinding sign, 600x200mm.", priority: "mid", machine: "cnc", owner: "m2", estMin: 175, startedMin: 95, assistants: [] },
+    { id: "c9", col: "inprogress", title: "Solder LED driver board", desc: "Hand-place 0805 passives, then reflow the driver IC.", priority: "high", machine: "elec", owner: "m4", estMin: 90, startedMin: 38, assistants: [] },
+    { id: "c10", col: "inprogress", title: "3D print drone frame", desc: "Carbon-fill nylon, full arm set. Long job.", priority: "mid", machine: "print", owner: "m1", estMin: 180, startedMin: 142, assistants: [] },
     // done (today)
-    { id: "c11", col: "done", title: "Laser-cut gift boxes", desc: "Run of 30 finger-joint boxes for the open-day giveaway.", priority: "mid", machine: "laser", owner: "m3", estMin: 60, doneMin: 40 },
-    { id: "c12", col: "done", title: "Flash firmware to controllers", desc: "Batch-flashed 12 motor controllers with v2.4.", priority: "low", machine: "soft", owner: "m4", estMin: 30, doneMin: 115 },
-    { id: "c13", col: "done", title: "Print spare clips batch", desc: "PLA, 50 cable clips for the workbenches.", priority: "low", machine: "print", owner: "m1", estMin: 90, doneMin: 190 },
-    { id: "c14", col: "done", title: "Cut gasket seals", desc: "Rubber sheet, 8 custom gaskets for the vacuum former.", priority: "mid", machine: "cnc", owner: "m7", estMin: 45, doneMin: 260 },
+    { id: "c11", col: "done", title: "Laser-cut gift boxes", desc: "Run of 30 finger-joint boxes for the open-day giveaway.", priority: "mid", machine: "laser", owner: "m3", estMin: 60, doneMin: 40, assistants: [] },
+    { id: "c12", col: "done", title: "Flash firmware to controllers", desc: "Batch-flashed 12 motor controllers with v2.4.", priority: "low", machine: "soft", owner: "m4", estMin: 30, doneMin: 115, assistants: [] },
+    { id: "c13", col: "done", title: "Print spare clips batch", desc: "PLA, 50 cable clips for the workbenches.", priority: "low", machine: "print", owner: "m1", estMin: 90, doneMin: 190, assistants: [] },
+    { id: "c14", col: "done", title: "Cut gasket seals", desc: "Rubber sheet, 8 custom gaskets for the vacuum former.", priority: "mid", machine: "cnc", owner: "m7", estMin: 45, doneMin: 260, assistants: [] },
   ];
 
   function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
@@ -163,6 +163,11 @@
         });
         // Ensure all cards have estMin
         (state.cards || []).forEach(function (c) { if (!c.estMin) c.estMin = 120; });
+        // Ensure all cards have assistants
+        (state.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+        (state.archived || []).forEach(function (day) {
+          (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+        });
         // Sync globals so components see the loaded machines
         syncMachines(state.machines);
         save(state);

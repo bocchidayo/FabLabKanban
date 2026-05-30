@@ -43,10 +43,14 @@ function Screensaver({ state, now, onExit }) {
     [state.members],
   );
 
-  const busyIds = React.useMemo(
-    () => new Set(activeJobs.map((c) => c.owner)),
-    [activeJobs],
-  );
+  const busyIds = React.useMemo(() => {
+    const s = new Set();
+    activeJobs.forEach(function(c) {
+      s.add(c.owner);
+      (c.assistants || []).forEach(function(id) { s.add(id); });
+    });
+    return s;
+  }, [activeJobs]);
 
   const freeMembers = React.useMemo(
     () => checkedIn.filter((m) => !busyIds.has(m.id)),
@@ -120,6 +124,10 @@ function Screensaver({ state, now, onExit }) {
             )}
             {activeJobs.map((card) => {
               const owner = getOwner(card);
+              const cardAssistants = (card.assistants || []).map(function(id) { return memberMap[id]; }).filter(Boolean);
+              const allJobMembers = owner ? [owner].concat(cardAssistants) : cardAssistants;
+              const visibleJobMembers = allJobMembers.slice(0, 3);
+              const extraJobMembers = allJobMembers.length - 3;
               const machine = MACHINES[card.machine] || {
                 color: '#666',
                 icon: 'question-mark',
@@ -131,7 +139,10 @@ function Screensaver({ state, now, onExit }) {
 
               return (
                 <div className="job-row" key={card.id}>
-                  <Avatar member={owner} size="lg" />
+                  <div className="av-stack">
+                    {visibleJobMembers.map(function(m) { return <Avatar key={m.id} member={m} size="lg" />; })}
+                    {extraJobMembers > 0 && <span className="av-extra" style={{ width: 36, height: 36, fontSize: 12 }}>+{extraJobMembers}</span>}
+                  </div>
                   <div className="jt">
                     {card.title}
                     <div className="jsub">

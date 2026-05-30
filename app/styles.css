@@ -172,6 +172,16 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 .av.md { width: 32px; height: 32px; font-size: 12px; }
 .av.lg { width: 36px; height: 36px; font-size: 13px; }
 .av.xl { width: 48px; height: 48px; font-size: 17px; }
+.av-stack { display: flex; align-items: center; }
+.av-stack .av { margin-left: -8px; border: 2px solid var(--surface); }
+.av-stack .av:first-child { margin-left: 0; }
+.av-stack .av-extra {
+  margin-left: -8px; flex: none;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--surface-2); border: 2px solid var(--surface);
+  font-size: 10px; font-weight: 700; color: var(--text-2);
+  display: grid; place-items: center;
+}
 
 /* ============================================================ MEMBER STRIP */
 .member-strip {
@@ -455,6 +465,16 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 /* ---- batch 2: delete confirm state ---- */
 .btn-danger { background: var(--p-high); border-color: var(--p-high); color: #fff; }
 .btn-danger:hover { opacity: 0.85; }
+.assistant-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.assistant-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 10px 0 6px;
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  background: var(--surface); font-size: 13px; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: background .1s, border-color .1s;
+}
+.assistant-chip:hover { background: var(--surface-2); }
+.assistant-chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .delete-confirm {
   background: var(--accent-soft); border-radius: var(--r);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;

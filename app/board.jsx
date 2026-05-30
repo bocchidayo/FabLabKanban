@@ -151,7 +151,7 @@ function TopBar({
             <div className="popover-list">
               {(members || []).map((m) => {
                 var busyIds = {};
-                (cards || []).forEach(function (c) { if (c.col === 'inprogress') busyIds[c.owner] = true; });
+                (cards || []).forEach(function (c) { if (c.col === 'inprogress') { busyIds[c.owner] = true; (c.assistants || []).forEach(function(id) { busyIds[id] = true; }); } });
                 var status = !m.checkedIn
                   ? t('member.not_checked_in', lang)
                   : (busyIds[m.id] ? t('member.busy', lang) : t('member.free', lang));
@@ -205,8 +205,9 @@ function MemberStrip({ members, cards, lang }) {
   const memberTask = React.useMemo(() => {
     const map = {};
     (cards || []).forEach((c) => {
-      if (c.col === 'inprogress' && c.owner) {
-        map[c.owner] = c;
+      if (c.col === 'inprogress') {
+        if (c.owner) map[c.owner] = c;
+        (c.assistants || []).forEach(function (id) { if (!map[id]) map[id] = c; });
       }
     });
     return map;
@@ -292,7 +293,7 @@ function FilterTabs({ filter, setFilter, cards, lang }) {
 // ---------------------------------------------------------------------------
 const PRIORITY_DEFAULT = 'mid';
 
-function Card({ card, member, now, isSelected, onClick, onClaimStart, dnd, lang }) {
+function Card({ card, member, assistantMembers, now, isSelected, onClick, onClaimStart, dnd, lang }) {
   const {
     id, title, desc, machine, priority, col,
     createdAt, startedAt, completedAt,
@@ -328,6 +329,11 @@ function Card({ card, member, now, isSelected, onClick, onClaimStart, dnd, lang 
 
   // Priority class
   const priClass = priority || PRIORITY_DEFAULT;
+
+  // Avatar stack
+  const allMembers = member ? [member].concat(assistantMembers || []) : (assistantMembers || []);
+  const visibleMembers = allMembers.slice(0, 3);
+  const extraMembers = allMembers.length - 3;
 
   // Drag event handlers
   let dragProps = {};
@@ -407,8 +413,11 @@ function Card({ card, member, now, isSelected, onClick, onClaimStart, dnd, lang 
 
       {/* Card footer */}
       <div className="card-foot">
-        {member && (
-          <Avatar member={member} size="sm" />
+        {visibleMembers.length > 0 && (
+          <div className="av-stack">
+            {visibleMembers.map(function(m) { return <Avatar key={m.id} member={m} size="sm" />; })}
+            {extraMembers > 0 && <span className="av-extra">+{extraMembers}</span>}
+          </div>
         )}
         {member && <span className="owner">{member.name || ''}</span>}
         <div className="card-foot-spacer" />
@@ -500,6 +509,7 @@ function Column({
             <Card
               card={card}
               member={memberMap[card.owner]}
+              assistantMembers={(card.assistants || []).map(function(id) { return memberMap[id]; }).filter(Boolean)}
               now={now}
               lang={lang}
               isSelected={selectedCardId === card.id}
