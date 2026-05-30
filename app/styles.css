@@ -175,7 +175,7 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 .av-stack { display: flex; align-items: center; }
 .av-stack .av { margin-left: -8px; border: 2px solid var(--surface); }
 .av-stack .av:first-child { margin-left: 0; }
-.av-extra {
+.av-stack .av-extra {
   margin-left: -8px; flex: none;
   width: 26px; height: 26px; border-radius: 50%;
   background: var(--surface-2); border: 2px solid var(--surface);
