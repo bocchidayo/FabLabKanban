@@ -141,7 +141,7 @@ function Screensaver({ state, now, onExit }) {
                 <div className="job-row" key={card.id}>
                   <div className="av-stack">
                     {visibleJobMembers.map(function(m) { return <Avatar key={m.id} member={m} size="lg" />; })}
-                    {extraJobMembers > 0 && <span className="av-stack av-extra" style={{ width: 36, height: 36, fontSize: 12 }}>+{extraJobMembers}</span>}
+                    {extraJobMembers > 0 && <span className="av-extra" style={{ width: 36, height: 36, fontSize: 12 }}>+{extraJobMembers}</span>}
                   </div>
                   <div className="jt">
                     {card.title}
