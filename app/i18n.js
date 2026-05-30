@@ -219,6 +219,33 @@
     "admin.attendance_absent":   { en: "No check-in today",                  es: "Sin check-in hoy" },
     "admin.attendance_export":   { en: "Export attendance CSV",              es: "Exportar CSV asistencia" },
     "admin.attendance_empty":    { en: "No attendance records for this day.", es: "Sin registros de asistencia para este día." },
+
+    // ---- cancel modal -------------------------------------------------------
+    "cancel.title":            { en: "Why is this task being removed?",             es: "¿Por qué se elimina esta tarea?" },
+    "cancel.placeholder":      { en: "Reason (optional)",                           es: "Razón (opcional)" },
+    "cancel.keep":             { en: "Keep task",                                   es: "Mantener tarea" },
+    "cancel.confirm":          { en: "Remove task",                                 es: "Eliminar tarea" },
+
+    // ---- completed tasks panel ----------------------------------------------
+    "admin.completed_title":    { en: "Completed Tasks",                            es: "Tareas Completadas" },
+    "admin.completed_desc":     { en: "Tasks archived from the Done column by day.", es: "Tareas archivadas desde la columna completados por día." },
+    "admin.completed_date":     { en: "Day",                                        es: "Día" },
+    "admin.completed_empty":    { en: "No completed tasks for this day.",            es: "Sin tareas completadas para este día." },
+    "admin.completed_export":   { en: "Export CSV",                                 es: "Exportar CSV" },
+    "admin.completed_estimated":{ en: "Est.",                                       es: "Est." },
+    "admin.completed_duration": { en: "Duration",                                   es: "Duración" },
+    "admin.completed_at":       { en: "Done at",                                    es: "Completado a" },
+    "admin.completed_overtime": { en: "Overtime",                                   es: "Sobretiempo" },
+
+    // ---- cancelled tasks panel ----------------------------------------------
+    "admin.cancelled_title":    { en: "Cancelled Tasks",                            es: "Tareas Canceladas" },
+    "admin.cancelled_desc":     { en: "Tasks removed before completion, with reason.", es: "Tareas eliminadas antes de completarse, con razón." },
+    "admin.cancelled_date":     { en: "Day",                                        es: "Día" },
+    "admin.cancelled_empty":    { en: "No cancelled tasks for this day.",            es: "Sin tareas canceladas para este día." },
+    "admin.cancelled_export":   { en: "Export CSV",                                 es: "Exportar CSV" },
+    "admin.cancelled_column":   { en: "Column",                                     es: "Columna" },
+    "admin.cancelled_created":  { en: "Created",                                    es: "Creado" },
+    "admin.cancelled_reason":   { en: "Reason",                                     es: "Razón" },
   };
 
   function t(key, lang) {
