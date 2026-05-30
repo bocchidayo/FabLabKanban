@@ -386,6 +386,15 @@ function Admin({ state, setState, onClose }) {
     }
   };
 
+  const handleStartFresh = () => {
+    if (confirm(t('admin.fresh_confirm', lang))) {
+      const fresh = FabData.buildEmpty(state.machines, state.lang);
+      FabData.save(fresh);
+      setState(fresh);
+      setPasswordValue(fresh.password || '');
+    }
+  };
+
   // ---- Render ------------------------------------------------------------
   return (
     <div className="admin">
@@ -639,6 +648,13 @@ function Admin({ state, setState, onClose }) {
                 style={{ color: 'red', marginTop: 16 }}
               >
                 {t('admin.reset', lang)}
+              </button>
+              <button
+                className="btn"
+                onClick={handleStartFresh}
+                style={{ color: 'red', marginTop: 8 }}
+              >
+                {t('admin.fresh_btn', lang)}
               </button>
             </div>
           </div>
