@@ -46,6 +46,7 @@
     var _machine  = useState(isEdit && editingCard ? editingCard.machine || null : null);
     var _priority = useState(isEdit && editingCard ? editingCard.priority || "mid" : "mid");
     var _estMin   = useState(isEdit && editingCard ? editingCard.estMin || 120 : 120);
+    var _assistants = useState(isEdit && editingCard ? (editingCard.assistants || []) : []);
 
     var owner    = _owner[0];    var setOwner    = _owner[1];
     var title    = _title[0];    var setTitle     = _title[1];
@@ -53,6 +54,7 @@
     var machine  = _machine[0];  var setMachine   = _machine[1];
     var priority = _priority[0]; var setPriority  = _priority[1];
     var estMin   = _estMin[0];   var setEstMin    = _estMin[1];
+    var assistants = _assistants[0]; var setAssistants = _assistants[1];
 
     var _touched      = useState(false);
     var touched       = _touched[0]; var setTouched = _touched[1];
@@ -81,6 +83,7 @@
 
       var fields = {
         owner: owner,
+        assistants: assistants,
         title: title.trim(),
         desc: desc.trim(),
         machine: machine,
@@ -102,9 +105,18 @@
       onClose();
     }
 
+    function toggleAssistant(memberId) {
+      setAssistants(function(prev) {
+        return prev.includes(memberId)
+          ? prev.filter(function(id) { return id !== memberId; })
+          : prev.concat([memberId]);
+      });
+    }
+
     function handleReassign(e) {
       var newId = e.target.value;
       setOwner(newId);
+      setAssistants(function(prev) { return prev.filter(function(id) { return id !== newId; }); });
       if (newId !== editingCard.owner) {
         onReassign(editingCard.id, newId);
       }
@@ -155,7 +167,11 @@
               React.createElement("select", {
                 className: "select" + (touched && !owner ? " err" : ""),
                 value: owner,
-                onChange: function (e) { setOwner(e.target.value); },
+                onChange: isEdit ? handleReassign : function(e) {
+                  var newId = e.target.value;
+                  setOwner(newId);
+                  setAssistants(function(prev) { return prev.filter(function(id) { return id !== newId; }); });
+                },
               },
                 React.createElement("option", { value: "", disabled: true }, t('field.owner_placeholder', lang)),
                 members.map(function (m) {
@@ -164,6 +180,34 @@
                 }),
               ),
             ),
+
+            members.length > 1 ? React.createElement("div", { className: "field" },
+              React.createElement("label", null,
+                t('field.assistants', lang), ' ',
+                React.createElement("span", { style: { fontSize: 12, color: 'var(--text-3)', fontWeight: 500 } },
+                  t('field.assistants_hint', lang)
+                )
+              ),
+              React.createElement("div", { className: "assistant-chips" },
+                members
+                  .filter(function(m) { return m.id !== owner; })
+                  .map(function(m) {
+                    var isOn = assistants.includes(m.id);
+                    return React.createElement("button", {
+                      key: m.id,
+                      type: "button",
+                      className: "assistant-chip" + (isOn ? " on" : ""),
+                      onClick: function() { toggleAssistant(m.id); }
+                    },
+                      React.createElement("span", {
+                        className: "av sm",
+                        style: { backgroundColor: m.color || '#888', flexShrink: 0 }
+                      }, (m.name || '').split(' ').map(function(w){ return w[0]; }).join('').slice(0, 2).toUpperCase()),
+                      React.createElement("span", null, m.name)
+                    );
+                  })
+              )
+            ) : null,
 
             // Title
             React.createElement("div", { className: "field" },
