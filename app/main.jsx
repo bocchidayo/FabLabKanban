@@ -287,7 +287,7 @@ function App() {
     if (idx !== -1) {
       completedTasks[idx] = {
         ...completedTasks[idx],
-        cards: [...completedTasks[idx].cards, enriched],
+        cards: [...(completedTasks[idx].cards || []), enriched],
       };
     } else {
       completedTasks.push({ date, cards: [enriched] });
@@ -307,8 +307,8 @@ function App() {
   }
 
   function onConfirmCancel(cardId, reason) {
-    const card = state.cards.find(c => c.id === cardId);
-    if (!card) { setCancellingCard(null); return; }
+    const card = cancellingCard;
+    if (!card || card.id !== cardId) { setCancellingCard(null); return; }
     const date = FabData.todayStr();
     const archived = { ...card, cancelReason: reason || '' };
     setState(s => {
@@ -317,7 +317,7 @@ function App() {
       if (idx !== -1) {
         cancelledTasks[idx] = {
           ...cancelledTasks[idx],
-          cards: [...cancelledTasks[idx].cards, archived],
+          cards: [...(cancelledTasks[idx].cards || []), archived],
         };
       } else {
         cancelledTasks.push({ date, cards: [archived] });
