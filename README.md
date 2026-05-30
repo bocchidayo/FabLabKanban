@@ -170,6 +170,19 @@ sudo reboot
 
 La app se abrirá automáticamente en pantalla completa al arrancar.
 
+### Primer despliegue en producción
+
+> Para usar la app en el laboratorio sin los datos de demostración, sigue estos pasos la primera vez.
+
+1. Abre la app en el navegador (`http://localhost:5000` o la IP de la Raspberry Pi).
+2. Haz clic en el ícono de **Ajustes** en la barra superior e ingresa la contraseña por defecto: `admin`.
+3. Haz clic en **"Comenzar sin datos demo"** y confirma — se eliminarán todas las tarjetas y miembros de prueba. Las categorías de máquinas se conservan.
+4. Ve a **Ajustes del laboratorio**: cambia el nombre del tablero y el tiempo de inactividad del salvapantallas.
+5. Ve a **Tipos de máquina**: ajusta o conserva las categorías por defecto.
+6. Ve a **Miembros registrados**: añade a los integrantes reales del equipo (nombre, iniciales y color de avatar).
+7. Ve a **Contraseña maestra**: cambia `admin` por una contraseña segura.
+8. Cierra el panel de administración. El tablero está listo para usar.
+
 ---
 
 ## English
@@ -335,6 +348,19 @@ sudo reboot
 ```
 
 The app will open automatically in fullscreen on boot.
+
+### First deployment
+
+> To use the app in your lab without the demo data, follow these steps the first time.
+
+1. Open the app in a browser (`http://localhost:5000` or the Raspberry Pi's IP address).
+2. Click the **Admin settings** icon in the top bar and enter the default password: `admin`.
+3. Click **"Start fresh"** and confirm — all demo cards and members will be deleted. Machine categories are kept.
+4. Go to **Lab settings**: change the board name and screensaver idle timeout.
+5. Go to **Machine categories**: adjust or keep the defaults.
+6. Go to **Registered members**: add your real team members (name, initials, and avatar color).
+7. Go to **Master password**: change `admin` to a secure password.
+8. Close the admin panel. The board is ready to use.
 
 ---
 

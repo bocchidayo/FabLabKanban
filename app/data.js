@@ -122,6 +122,22 @@
     };
   }
 
+  function buildEmpty(machinesArray, lang) {
+    var machines = (machinesArray || []).map(function (m) { return Object.assign({}, m); });
+    syncMachines(machines);
+    return {
+      lab: "FabLab",
+      password: "admin",
+      idleMinutes: 3,
+      members: [],
+      machines: machines,
+      cards: [],
+      archived: [],
+      lastReset: todayStr(),
+      lang: lang || 'es',
+    };
+  }
+
   // ---- persist ---------------------------------------------------------
   function load() {
     try {
@@ -255,6 +271,7 @@
     load: load,
     save: save,
     reset: reset,
+    buildEmpty: buildEmpty,
     syncMachines: syncMachines,
     fmtDuration: fmtDuration,
     fmtAgo: fmtAgo,

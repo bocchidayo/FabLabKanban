@@ -194,6 +194,18 @@ function Admin({ state, setState, onClose }) {
     return [...a].sort((x, y) => new Date(y.date) - new Date(x.date));
   }, [state.archived]);
 
+  const [archiveFrom, setArchiveFrom] = React.useState('');
+  const [archiveTo,   setArchiveTo]   = React.useState('');
+
+  const filteredArchiveEntries = React.useMemo(() => {
+    if (!archiveFrom && !archiveTo) return archiveEntries;
+    return archiveEntries.filter(function (entry) {
+      if (archiveFrom && entry.date < archiveFrom) return false;
+      if (archiveTo   && entry.date > archiveTo)   return false;
+      return true;
+    });
+  }, [archiveEntries, archiveFrom, archiveTo]);
+
   // Lab settings local state
   const [labName, setLabName] = React.useState(state.lab || '');
   const [idleMin, setIdleMin] = React.useState(state.idleMinutes || 3);
@@ -371,6 +383,17 @@ function Admin({ state, setState, onClose }) {
       const fresh = FabData.reset();
       setState(fresh);
       setPasswordValue(fresh.password || '');
+    }
+  };
+
+  const handleStartFresh = () => {
+    if (confirm(t('admin.fresh_confirm', lang))) {
+      const fresh = FabData.buildEmpty(state.machines, state.lang);
+      FabData.save(fresh);
+      setState(fresh);
+      setPasswordValue(fresh.password || '');
+      setArchiveFrom('');
+      setArchiveTo('');
     }
   };
 
@@ -560,10 +583,39 @@ function Admin({ state, setState, onClose }) {
               <p>{t('admin.archive_desc', lang)}</p>
             </div>
             <div className="panel-body">
+              {hasArchived && (
+                <div className="archive-filter">
+                  <label className="archive-filter-label">{t('admin.archive_from', lang)}</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={archiveFrom}
+                    onChange={e => setArchiveFrom(e.target.value)}
+                  />
+                  <label className="archive-filter-label">{t('admin.archive_to', lang)}</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={archiveTo}
+                    onChange={e => setArchiveTo(e.target.value)}
+                  />
+                  {(archiveFrom || archiveTo) && (
+                    <button
+                      className="btn"
+                      style={{ height: 36, padding: '0 10px', fontSize: 13 }}
+                      onClick={() => { setArchiveFrom(''); setArchiveTo(''); }}
+                    >
+                      × {t('admin.archive_clear', lang)}
+                    </button>
+                  )}
+                </div>
+              )}
               {!hasArchived ? (
                 <p>{t('admin.archive_empty', lang)}</p>
+              ) : filteredArchiveEntries.length === 0 ? (
+                <p style={{ opacity: 0.6, fontSize: 13 }}>{t('admin.archive_none', lang)}</p>
               ) : (
-                archiveEntries.map(entry => (
+                filteredArchiveEntries.map(entry => (
                   <div key={entry.date} className="archive-group">
                     <div className="archive-date">{formatDate(entry.date)}</div>
                     {(entry.cards || []).map((card, i) => (
@@ -598,6 +650,13 @@ function Admin({ state, setState, onClose }) {
                 style={{ color: 'red', marginTop: 16 }}
               >
                 {t('admin.reset', lang)}
+              </button>
+              <button
+                className="btn"
+                onClick={handleStartFresh}
+                style={{ color: 'red', marginTop: 8 }}
+              >
+                {t('admin.fresh_btn', lang)}
               </button>
             </div>
           </div>
