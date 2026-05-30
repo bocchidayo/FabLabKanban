@@ -464,7 +464,66 @@
     );
   }
 
+  // ============================================================ CancelReasonModal
+  function CancelReasonModal(props) {
+    var card = props.card;
+    var lang = props.lang || 'en';
+    var onConfirm = props.onConfirm;
+    var onClose = props.onClose;
+
+    var _reason = useState('');
+    var reason = _reason[0]; var setReason = _reason[1];
+
+    // Esc closes without deleting
+    useEffect(function () {
+      function onKey(e) { if (e.key === 'Escape') onClose(); }
+      window.addEventListener('keydown', onKey);
+      return function () { window.removeEventListener('keydown', onKey); };
+    }, []);
+
+    function handleOverlayClick(e) {
+      if (e.target === e.currentTarget) onClose();
+    }
+
+    return React.createElement('div', { className: 'overlay', onClick: handleOverlayClick },
+      React.createElement('div', { className: 'modal', style: { maxWidth: 420 } },
+
+        React.createElement('div', { className: 'modal-head' },
+          React.createElement('h3', null, t('cancel.title', lang)),
+          React.createElement('span', { className: 'sub' }, card.title),
+        ),
+
+        React.createElement('div', { className: 'modal-body' },
+          React.createElement('textarea', {
+            className: 'textarea',
+            rows: 3,
+            style: { width: '100%', resize: 'vertical' },
+            placeholder: t('cancel.placeholder', lang),
+            value: reason,
+            onChange: function (e) { setReason(e.target.value); },
+            autoFocus: true,
+          }),
+        ),
+
+        React.createElement('div', { className: 'modal-foot' },
+          React.createElement('div', { className: 'sp' }),
+          React.createElement('button', {
+            className: 'btn',
+            onClick: onClose,
+            type: 'button',
+          }, t('cancel.keep', lang)),
+          React.createElement('button', {
+            className: 'btn btn-coral',
+            onClick: function () { onConfirm(card.id, reason); },
+            type: 'button',
+          }, t('cancel.confirm', lang)),
+        ),
+      ),
+    );
+  }
+
   // ---- export to window --------------------------------------------------
   window.CardModal = CardModal;
   window.Cheatsheet = Cheatsheet;
+  window.CancelReasonModal = CancelReasonModal;
 })();

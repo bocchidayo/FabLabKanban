@@ -164,6 +164,13 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 
 .checkin-time-chip { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
 
+/* cancel/destructive button — softer red than btn-danger */
+.btn-coral { background: var(--coral); color: #fff; }
+.btn-coral:hover { background: #d4614a; }
+
+/* overtime badge in completed tasks panel */
+.overtime-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #fde8e8; color: var(--p-high); white-space: nowrap; }
+
 .attendance-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
 .attendance-table th { text-align: left; padding: 5px 8px; color: var(--text-3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
 .attendance-table td { padding: 8px 8px; border-bottom: 1px solid var(--surface-2); vertical-align: middle; }
