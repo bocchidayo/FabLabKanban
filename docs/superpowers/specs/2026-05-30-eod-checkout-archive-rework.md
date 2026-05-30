@@ -244,9 +244,13 @@ Render — exclusive, cancel takes priority:
     : null}
 ```
 
-### 3.5 `CancelReasonModal` component (`board.jsx` or new file)
+### 3.5 `CancelReasonModal` component (`app/modal.jsx`)
 
-Simple modal with a `<textarea>` for the reason. Cancel button dismisses without archiving (card is NOT deleted). Confirm button calls `onConfirm(card.id, reason)`.
+Simple modal with a `<textarea>` for the reason. Defined in `modal.jsx` alongside `CardModal` — consistent with the existing modal pattern.
+
+**"Mantener tarea" / "Keep task"** dismisses the modal without any action. The card remains on the board exactly where it was. This is intentional UX: the prompt is a reflection point, not a trap. The implementer should not add any deletion logic to the cancel/close path.
+
+**"Eliminar tarea" / "Remove task"** calls `onConfirm(card.id, reason)` which archives to `cancelledTasks` and removes from `state.cards`.
 
 ```jsx
 function CancelReasonModal({ card, lang, onConfirm, onClose }) {
@@ -381,7 +385,7 @@ fecha,tarea,prioridad,maquina,owner,asistentes,columna,creado_en,razon
 |---|---|
 | `app/data.js` | `performDailyReset` replaces `archiveDoneCards`; migrations for `completedTasks`, `cancelledTasks`, `lastReset`; `buildSeed`/`buildEmpty` updated |
 | `app/main.jsx` | `deleteCard` split; `archiveCompletedCard` helper; `cancellingCard` state; `CancelReasonModal` in render; `checkReset` uses `performDailyReset` |
-| `app/board.jsx` | Add `CancelReasonModal` component |
+| `app/modal.jsx` | Add `CancelReasonModal` component |
 | `app/admin.jsx` | Remove Archive panel; add `CompletedTasksPanel` + `CancelledTasksPanel`; update all `state.archived` refs |
 | `app/i18n.js` | Add `cancel.*` and `admin.completed_*` and `admin.cancelled_*` keys |
 | `app/styles.css` | `.btn-coral` if not already present; overtime badge styles |
