@@ -154,6 +154,10 @@
     "admin.archive_desc":        { en: "Completed tasks from past days, grouped by date.", es: "Tareas completadas de días anteriores, agrupadas por fecha." },
     "admin.archive_empty":       { en: "No archived tasks yet. Completed tasks are archived daily at midnight.", es: "Aún no hay tareas archivadas. Las tareas completadas se archivan cada medianoche." },
     "admin.archive_count":       { en: "{n} task{s}",              es: "{n} tarea{s}" },
+    "admin.archive_from":        { en: "From",                     es: "Desde" },
+    "admin.archive_to":          { en: "To",                       es: "Hasta" },
+    "admin.archive_clear":       { en: "Clear filter",             es: "Limpiar" },
+    "admin.archive_none":        { en: "No entries match the selected dates.", es: "No hay tareas en el rango seleccionado." },
 
     "admin.export_title":        { en: "Export data",              es: "Exportar datos" },
     "admin.export_desc":         { en: "Download your board data in CSV or JSON format.", es: "Descarga los datos del tablero en formato CSV o JSON." },
@@ -161,6 +165,8 @@
     "admin.export_json":         { en: "Export JSON",              es: "Exportar JSON" },
     "admin.reset":               { en: "Reset demo data",          es: "Restablecer datos demo" },
     "admin.reset_confirm":       { en: "Reset all demo data? This cannot be undone.", es: "¿Restablecer todos los datos? No se puede deshacer." },
+    "admin.fresh_btn":           { en: "Start fresh",              es: "Comenzar sin datos demo" },
+    "admin.fresh_confirm":       { en: "This will delete ALL members and tasks and cannot be undone. Machine categories will be kept. Continue?", es: "Esto eliminará TODOS los miembros y tareas y no se puede deshacer. Las categorías de máquinas se conservarán. ¿Continuar?" },
     "admin.unknown_member":      { en: "Unknown",                  es: "Desconocido" },
 
     // ---- tutorial -------------------------------------------------------
