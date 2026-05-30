@@ -338,10 +338,13 @@ function Admin({ state, setState, onClose }) {
 
   const exportCSV = () => {
     const today = new Date().toISOString().slice(0, 10);
-    const cols = ['id', 'title', 'column', 'priority', 'machine', 'owner', 'created', 'completed'];
+    const cols = ['id', 'title', 'column', 'priority', 'machine', 'owner', 'assistants', 'created', 'completed'];
     const rows = [cols];
 
     (state.cards || []).forEach(task => {
+      const assistantNames = (task.assistants || [])
+        .map(id => { const m = (state.members || []).find(m => m.id === id); return m ? m.name : id; })
+        .join('|');
       rows.push([
         task.id,
         escCSV(task.title),
@@ -349,6 +352,7 @@ function Admin({ state, setState, onClose }) {
         task.priority || '',
         task.machine || '',
         task.owner || '',
+        escCSV(assistantNames),
         task.createdAt || '',
         task.completedAt || '',
       ]);
