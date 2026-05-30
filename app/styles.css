@@ -609,7 +609,7 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 }
 .tutorial-tooltip {
   position: fixed; z-index: 302;
-  width: 360px;
+  width: 380px;
   background: #1a1d21; color: #e9ecef;
   border: 1px solid #343a40; border-radius: var(--r-lg);
   padding: 22px 24px;
@@ -633,8 +633,8 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 .tutorial-nav {
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
 }
-.tutorial-nav .btn { font-size: 13px; height: 34px; padding: 0 10px; }
-.tutorial-nav .btn-accent { font-size: 13px; height: 34px; padding: 0 10px; }
+.tutorial-nav .btn { font-size: 13px; height: 34px; padding: 0 8px; }
+.tutorial-nav .btn-accent { font-size: 13px; height: 34px; padding: 0 8px; }
 .tutorial-dots { display: flex; gap: 6px; align-items: center; }
 .tutorial-dot {
   width: 8px; height: 8px; border-radius: 50%;
