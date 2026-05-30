@@ -116,7 +116,8 @@
       members: clone(seedMembers),
       machines: machines,
       cards: cards,
-      archived: [],
+      completedTasks: [],
+      cancelledTasks: [],
       attendance: [],
       lastReset: todayStr,
       lang: "en",
@@ -133,7 +134,8 @@
       members: [],
       machines: machines,
       cards: [],
-      archived: [],
+      completedTasks: [],
+      cancelledTasks: [],
       attendance: [],
       lastReset: todayStr(),
       lang: lang || 'es',
@@ -151,8 +153,7 @@
       if (raw) {
         var state = JSON.parse(raw);
         // Migrations
-        if (!state.archived) state.archived = [];
-        if (!state.lastReset) state.lastReset = "";
+        if (!state.lastReset) state.lastReset = todayStr();
         if (!state.machines || !state.machines.length) state.machines = clone(SEED_MACHINES);
         if (!state.idleMinutes) state.idleMinutes = 3;
         if (!state.lang) state.lang = "en";
@@ -174,6 +175,12 @@
         if (!state.attendance) state.attendance = [];
         // Ensure all members have checkedInAt
         state.members.forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
+        // Rename archived → completedTasks; delete old key to prevent localStorage bloat
+        if (!state.completedTasks) {
+          state.completedTasks = state.archived || [];
+        }
+        if (!state.cancelledTasks) state.cancelledTasks = [];
+        delete state.archived;
         // Sync globals so components see the loaded machines
         syncMachines(state.machines);
         save(state);
@@ -253,16 +260,40 @@
     return new Date().toISOString().slice(0, 10);
   }
 
-  function archiveDoneCards(state) {
+  function performDailyReset(state, now) {
     var today = todayStr();
-    var doneCards = state.cards.filter(function (c) { return c.col === "done"; });
-    if (doneCards.length === 0) return state;
-    var activeCards = state.cards.filter(function (c) { return c.col !== "done"; });
-    var archived = state.archived || [];
-    archived.push({ date: state.lastReset || today, cards: doneCards });
+    var archiveDate = state.lastReset || today;
+
+    // 1. Archive Done cards → completedTasks
+    var doneCards = state.cards.filter(function (c) { return c.col === 'done'; });
+    var activeCards = state.cards.filter(function (c) { return c.col !== 'done'; });
+    var completedTasks = (state.completedTasks || []).slice();
+
+    if (doneCards.length > 0) {
+      var enriched = doneCards.map(function (c) {
+        var overtime = !!(c.startedAt && c.completedAt && c.estMin &&
+          (new Date(c.completedAt) - new Date(c.startedAt)) > c.estMin * 60000);
+        return Object.assign({}, c, { overtime: overtime });
+      });
+      completedTasks.push({ date: archiveDate, cards: enriched });
+    }
+
+    // 2. Close all open attendance sessions
+    var checkOutTime = fmtHHMM(now);
+    var attendance = (state.attendance || []).map(function (e) {
+      return e.checkOut === null ? Object.assign({}, e, { checkOut: checkOutTime }) : e;
+    });
+
+    // 3. Reset all members' check-in state
+    var members = state.members.map(function (m) {
+      return Object.assign({}, m, { checkedIn: false, checkedInAt: null });
+    });
+
     return Object.assign({}, state, {
       cards: activeCards,
-      archived: archived,
+      completedTasks: completedTasks,
+      attendance: attendance,
+      members: members,
       lastReset: today,
     });
   }
@@ -297,7 +328,7 @@
     isStaleBacklog: isStaleBacklog,
     isReadyNudged: isReadyNudged,
     todayStr: todayStr,
-    archiveDoneCards: archiveDoneCards,
+    performDailyReset: performDailyReset,
     getTodayDone: getTodayDone,
     fmtHHMM: fmtHHMM,
   };
