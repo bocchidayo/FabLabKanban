@@ -172,6 +172,144 @@ function AddMember({ onAdd, lang }) {
 }
 
 // ---------------------------------------------------------------------------
+// AttendancePanel — daily check-in / check-out log
+// ---------------------------------------------------------------------------
+function AttendancePanel({ state, lang }) {
+  const [attendanceDate, setAttendanceDate] = React.useState(FabData.todayStr());
+
+  const entries = (state.attendance || []).filter(e => e.date === attendanceDate);
+  const presentMemberIds = new Set(entries.map(e => e.memberId));
+  const absentMembers = (state.members || []).filter(m => !presentMemberIds.has(m.id));
+
+  function getMember(id) {
+    return (state.members || []).find(m => m.id === id);
+  }
+
+  function calcDurationMins(checkIn, checkOut) {
+    if (!checkOut) return null;
+    const [h1, m1] = checkIn.split(':').map(Number);
+    const [h2, m2] = checkOut.split(':').map(Number);
+    let mins = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (mins < 0) mins += 1440;
+    return mins;
+  }
+
+  function fmtDur(checkIn, checkOut) {
+    const mins = calcDurationMins(checkIn, checkOut);
+    if (mins === null) return t('admin.attendance_ongoing', lang);
+    return FabData.fmtDuration(mins * 60000);
+  }
+
+  const escCSV = val => '"' + (val || '').toString().replace(/"/g, '""') + '"';
+
+  const exportCSV = () => {
+    const header = ['fecha', 'miembro', 'entrada', 'salida', 'duracion_min'];
+    const rows = [header];
+    entries.forEach(e => {
+      const member = getMember(e.memberId);
+      const mins = calcDurationMins(e.checkIn, e.checkOut);
+      rows.push([
+        attendanceDate,
+        escCSV(member ? member.name : e.memberId),
+        e.checkIn || '',
+        e.checkOut || '',
+        mins !== null ? mins : t('admin.attendance_ongoing', lang),
+      ]);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fablab-asistencia-' + attendanceDate + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <h3>{t('admin.attendance_title', lang)}</h3>
+        <p>{t('admin.attendance_desc', lang)}</p>
+      </div>
+      <div className="panel-body">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>
+            {t('admin.attendance_date', lang)}
+          </label>
+          <input
+            type="date"
+            className="input"
+            value={attendanceDate}
+            onChange={e => setAttendanceDate(e.target.value)}
+            style={{ width: 160, height: 36 }}
+          />
+        </div>
+
+        {entries.length === 0 && absentMembers.length === 0 ? (
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>{t('admin.attendance_empty', lang)}</p>
+        ) : (
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>↓ {t('admin.attendance_entry', lang)}</th>
+                <th>↑ {t('admin.attendance_exit', lang)}</th>
+                <th>{t('admin.attendance_duration', lang)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((e, i) => {
+                const member = getMember(e.memberId);
+                const isActive = !e.checkOut;
+                return (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {member && <Avatar member={member} size="sm" />}
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>
+                          {member ? member.name : e.memberId}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--ok)', fontWeight: 700 }}>{e.checkIn}</td>
+                    <td style={{ color: isActive ? 'var(--text-3)' : 'var(--p-high)', fontWeight: isActive ? 400 : 700 }}>
+                      {isActive ? t('admin.attendance_active', lang) : e.checkOut}
+                    </td>
+                    <td style={{ color: isActive ? 'var(--text-3)' : 'var(--text-2)', fontSize: 13 }}>
+                      {fmtDur(e.checkIn, e.checkOut)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {absentMembers.map(m => (
+                <tr key={m.id} style={{ opacity: 0.4 }}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Avatar member={m} size="sm" />
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</span>
+                    </div>
+                  </td>
+                  <td colSpan={3} style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                    {t('admin.attendance_absent', lang)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {entries.length > 0 && (
+          <button className="btn btn-accent" onClick={exportCSV} style={{ marginTop: 14 }}>
+            {t('admin.attendance_export', lang)}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Admin — top-level admin panel with all sections
 // ---------------------------------------------------------------------------
 function Admin({ state, setState, onClose }) {
@@ -636,6 +774,9 @@ function Admin({ state, setState, onClose }) {
               )}
             </div>
           </div>
+
+          {/* ---- Attendance log ---------------------------------------- */}
+          <AttendancePanel state={state} lang={lang} />
 
           {/* ---- Export data ------------------------------------------- */}
           <div className="panel">

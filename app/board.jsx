@@ -159,6 +159,11 @@ function TopBar({
                   <div key={m.id} className="checkin-row">
                     <Avatar member={m} size="sm" />
                     <span className="nm">{m.name || m.id}</span>
+                    {m.checkedIn && m.checkedInAt && (
+                      <span className="checkin-time-chip">
+                        {new Date(m.checkedInAt).toLocaleTimeString(lang === 'es' ? 'es' : 'en', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                    )}
                     <span className="status">{status}</span>
                     <button
                       className={`checkin-toggle ${m.checkedIn ? 'in' : 'out'}`}

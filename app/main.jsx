@@ -186,10 +186,37 @@ function App() {
 
   // ---- Actions ----
   function checkIn(memberId) {
-    setState(s => ({
-      ...s,
-      members: s.members.map(m => m.id === memberId ? { ...m, checkedIn: !m.checkedIn } : m),
-    }));
+    const now = new Date();
+    setState(s => {
+      const member = s.members.find(m => m.id === memberId);
+      if (!member) return s;
+      const isCheckingIn = !member.checkedIn;
+
+      const members = s.members.map(m =>
+        m.id === memberId
+          ? { ...m, checkedIn: isCheckingIn, checkedInAt: isCheckingIn ? now.toISOString() : null }
+          : m
+      );
+
+      let attendance = [...(s.attendance || [])];
+      if (isCheckingIn) {
+        attendance.push({
+          memberId,
+          date: FabData.todayStr(),
+          checkIn: FabData.fmtHHMM(now),
+          checkOut: null,
+        });
+      } else {
+        const reversed = [...attendance].reverse();
+        const lastOpenIdx = reversed.findIndex(e => e.memberId === memberId && e.checkOut === null);
+        if (lastOpenIdx !== -1) {
+          const realIdx = attendance.length - 1 - lastOpenIdx;
+          attendance[realIdx] = { ...attendance[realIdx], checkOut: FabData.fmtHHMM(now) };
+        }
+      }
+
+      return { ...s, members, attendance };
+    });
     setCheckedInMemberId(memberId);
   }
 
