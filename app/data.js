@@ -187,9 +187,9 @@
         return state;
       }
     } catch (e) { /* ignore */ }
-    var seed = buildSeed();
-    save(seed);
-    return seed;
+    var empty = buildEmpty(clone(SEED_MACHINES), 'es');
+    save(empty);
+    return empty;
   }
 
   function save(state) {
@@ -306,6 +306,11 @@
     });
   }
 
+  function isNewInstall(state) {
+    return (!state.members || state.members.length === 0) &&
+           (!state.cards   || state.cards.length   === 0);
+  }
+
   // ---- exposed API -----------------------------------------------------
   window.FabData = {
     MACHINES: MACHINES,
@@ -317,7 +322,9 @@
     load: load,
     save: save,
     reset: reset,
+    buildSeed: buildSeed,
     buildEmpty: buildEmpty,
+    isNewInstall: isNewInstall,
     syncMachines: syncMachines,
     fmtDuration: fmtDuration,
     fmtAgo: fmtAgo,

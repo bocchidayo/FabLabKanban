@@ -246,6 +246,16 @@
     "admin.cancelled_column":   { en: "Column",                                     es: "Columna" },
     "admin.cancelled_created":  { en: "Created",                                    es: "Creado" },
     "admin.cancelled_reason":   { en: "Reason",                                     es: "Razón" },
+
+    // ---- system panel -------------------------------------------------------
+    "admin.system_title":  { en: "System",                       es: "Sistema" },
+    "admin.system_desc":   { en: "Initialization and update controls.", es: "Controles de inicialización y actualización." },
+    "admin.seed_btn":      { en: "Initialize Demo Data",         es: "Inicializar datos de demostración" },
+    "admin.seed_confirm":  { en: "This will populate the board with demo members, machines, and cards. Only use on a new installation. Continue?",
+                             es: "Esto llenará el tablero con miembros, máquinas y tarjetas de demostración. Úsalo solo en una instalación nueva. ¿Continuar?" },
+    "admin.reload_btn":    { en: "Reload App",                   es: "Recargar aplicación" },
+    "admin.reload_desc":   { en: "After running `git pull` on the Pi, click this to apply updates. Your data is safe — code updates never touch browser storage.",
+                             es: "Después de ejecutar `git pull` en la Pi, haz clic aquí para aplicar las actualizaciones. Tus datos están seguros: las actualizaciones de código nunca tocan el almacenamiento del navegador." },
   };
 
   function t(key, lang) {
