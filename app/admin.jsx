@@ -809,6 +809,20 @@ function Admin({ state, setState, onClose }) {
     }
   };
 
+  // ---- System panel -------------------------------------------------------
+  const handleSeedInit = () => {
+    if (confirm(t('admin.seed_confirm', lang))) {
+      const fresh = FabData.buildSeed();
+      FabData.save(fresh);
+      setState(fresh);
+      setPasswordValue(fresh.password || '');
+    }
+  };
+
+  const handleReload = () => {
+    window.location.reload();
+  };
+
   // ---- Render ------------------------------------------------------------
   return (
     <div className="admin">
@@ -1024,6 +1038,34 @@ function Admin({ state, setState, onClose }) {
               </button>
             </div>
           </div>
+
+          {/* ---- System ------------------------------------------------- */}
+          <div className="panel">
+            <div className="panel-head">
+              <h3>{t('admin.system_title', lang)}</h3>
+              <p>{t('admin.system_desc', lang)}</p>
+            </div>
+            <div className="panel-body">
+              {FabData.isNewInstall(state) && (
+                <button
+                  className="btn btn-accent"
+                  onClick={handleSeedInit}
+                  style={{ marginBottom: 12 }}
+                >
+                  {t('admin.seed_btn', lang)}
+                </button>
+              )}
+              <div>
+                <button className="btn" onClick={handleReload}>
+                  {t('admin.reload_btn', lang)}
+                </button>
+                <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-3)' }}>
+                  {t('admin.reload_desc', lang)}
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
