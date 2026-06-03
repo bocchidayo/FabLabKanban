@@ -46,5 +46,39 @@ class StateStore:
         os.replace(self.tmp_path, self.data_path)  # atomic swap (safe on SD cards)
 
     def _backup_if_due(self):
-        """No-op for now; throttled backups added in Task 3."""
-        return
+        if not os.path.exists(self.data_path):
+            return  # nothing to back up on first ever write
+        os.makedirs(self.backups_dir, exist_ok=True)
+        now = self.clock()
+        last = self._last_backup_time()
+        if last is not None and (now - last) < self.backup_interval:
+            return  # throttled
+        stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime(now))
+        dest = os.path.join(self.backups_dir, "data-%s.json" % stamp)
+        suffix = 0
+        while os.path.exists(dest):  # avoid same-second collisions
+            suffix += 1
+            dest = os.path.join(self.backups_dir, "data-%s-%d.json" % (stamp, suffix))
+        shutil.copy2(self.data_path, dest)
+        os.utime(dest, (now, now))  # pin mtime to clock for deterministic throttling
+        self._prune()
+
+    def _backup_files(self):
+        if not os.path.isdir(self.backups_dir):
+            return []
+        return [
+            os.path.join(self.backups_dir, n)
+            for n in os.listdir(self.backups_dir)
+            if n.startswith("data-") and n.endswith(".json")
+        ]
+
+    def _last_backup_time(self):
+        files = self._backup_files()
+        if not files:
+            return None
+        return max(os.path.getmtime(p) for p in files)
+
+    def _prune(self):
+        files = sorted(self._backup_files(), key=os.path.getmtime)
+        while len(files) > self.backup_keep:
+            os.remove(files.pop(0))
