@@ -24,6 +24,22 @@ function ErrorScreen({ onRetry }) {
   );
 }
 
+function SchemaVersionScreen({ message }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column",
+      gap: 16, alignItems: "center", justifyContent: "center", background: "var(--bg)",
+      color: "var(--text-1)", textAlign: "center", padding: 24 }}>
+      <div style={{ font: "700 20px/1.3 Figtree, sans-serif" }}>
+        Versión de datos incompatible.<br />Incompatible data version.
+      </div>
+      <div style={{ font: "400 15px/1.5 Figtree, sans-serif", color: "var(--text-2)",
+        maxWidth: 480 }}>
+        {message || "Actualiza la aplicación. / Update the application."}
+      </div>
+    </div>
+  );
+}
+
 function App({ initialState }) {
   const [state, setState] = React.useState(initialState);
   const [screen, setScreen] = React.useState("board"); // "board" | "admin"
@@ -470,20 +486,32 @@ function App({ initialState }) {
 }
 
 function AppRoot() {
-  const [phase, setPhase] = React.useState("loading"); // loading | ready | error
+  const [phase, setPhase] = React.useState("loading"); // loading | ready | error | schema-error
   const [initial, setInitial] = React.useState(null);
   const [attempt, setAttempt] = React.useState(0);
+  const [schemaError, setSchemaError] = React.useState(null);
 
   React.useEffect(() => {
     let cancelled = false;
     setPhase("loading");
+    setSchemaError(null);
     window.FabData.load()
       .then(s => { if (!cancelled) { setInitial(s); setPhase("ready"); } })
-      .catch(() => { if (!cancelled) setPhase("error"); });
+      .catch(e => {
+        if (!cancelled) {
+          if (e.isSchemaVersionError) {
+            setSchemaError(e.message);
+            setPhase("schema-error");
+          } else {
+            setPhase("error");
+          }
+        }
+      });
     return () => { cancelled = true; };
   }, [attempt]);
 
   if (phase === "loading") return <LoadingScreen />;
+  if (phase === "schema-error") return <SchemaVersionScreen message={schemaError} />;
   if (phase === "error") return <ErrorScreen onRetry={() => setAttempt(a => a + 1)} />;
   return <App initialState={initial} />;
 }

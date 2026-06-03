@@ -809,7 +809,17 @@ function Admin({ state, setState, onClose }) {
       try { parsed = JSON.parse(reader.result); }
       catch (err) { alert(t('admin.import_error', lang)); return; }
       if (!confirm(t('admin.import_confirm', lang))) return;
-      const migrated = FabData.migrate(parsed);
+      let migrated;
+      try {
+        migrated = FabData.migrate(parsed);
+      } catch (err) {
+        if (err.isSchemaVersionError) {
+          alert('Versión incompatible / Incompatible version:\n' + err.message);
+        } else {
+          alert(t('admin.import_error', lang));
+        }
+        return;
+      }
       FabData.saveNow(migrated)
         .then(() => {
           setState(migrated);

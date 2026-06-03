@@ -12,6 +12,7 @@
   const SAVE_DEBOUNCE_MS = 750;
   const LOAD_RETRIES = 5;
   const LOAD_RETRY_DELAY_MS = 1000;
+  const SCHEMA_VERSION = 1;
 
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
@@ -125,8 +126,9 @@
       completedTasks: [],
       cancelledTasks: [],
       attendance: [],
-      lastReset: todayStr,
+      lastReset: todayStr(),
       lang: "en",
+      schemaVersion: SCHEMA_VERSION,
     };
   }
 
@@ -145,11 +147,21 @@
       attendance: [],
       lastReset: todayStr(),
       lang: lang || 'es',
+      schemaVersion: SCHEMA_VERSION,
     };
   }
 
   // ---- migrations (run on any loaded or imported state) ----------------
   function migrate(state) {
+    var fileVersion = state.schemaVersion || 0;
+    if (fileVersion > SCHEMA_VERSION) {
+      var err = new Error(
+        'Schema v' + fileVersion + ' is newer than this app (v' + SCHEMA_VERSION + '). ' +
+        'Update the app before opening this data.'
+      );
+      err.isSchemaVersionError = true;
+      throw err;
+    }
     if (!state.lastReset) state.lastReset = todayStr();
     if (!state.machines || !state.machines.length) state.machines = clone(SEED_MACHINES);
     if (!state.idleMinutes) state.idleMinutes = 3;
@@ -171,6 +183,7 @@
     if (!state.cancelledTasks) state.cancelledTasks = [];
     delete state.archived;
     syncMachines(state.machines);
+    state.schemaVersion = SCHEMA_VERSION;
     return state;
   }
 
@@ -187,6 +200,7 @@
         var state = await res.json();
         return migrate(state);
       } catch (e) {
+        if (e.isSchemaVersionError) throw e;  // retrying won't help
         lastErr = e;
         if (attempt < LOAD_RETRIES - 1) await delay(LOAD_RETRY_DELAY_MS);
       }
