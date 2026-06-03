@@ -45,8 +45,11 @@ Una aplicación web estática que permite al equipo de un FabLab gestionar tarea
 - Botón "Comenzar sin datos demo" para despliegue en producción
 
 **Persistencia**
-- Todo se guarda automáticamente en `localStorage` bajo la clave `fablab_utp_v3`
-- No se necesita backend
+- Todo se guarda en un archivo `data.json` en el disco de la Raspberry Pi (no en el navegador)
+- Un pequeño servicio Python (`server.py`, sólo biblioteca estándar) gestiona la lectura/escritura vía `GET`/`POST /api/state`
+- Escrituras atómicas (archivo temporal → `os.replace`) y copias de seguridad rotativas en `backups/` (máx. 20, como mucho una cada 5 min)
+- nginx sirve los archivos estáticos y reenvía `/api/` al servicio en `127.0.0.1:5001`
+- Botón **Importar JSON** en el panel de administración para restaurar una exportación
 
 ### Atajos de teclado
 
@@ -115,7 +118,7 @@ open http://localhost:5000
 #### 1. Clonar en la Raspberry Pi
 
 ```bash
-git clone https://github.com/bocchidayo/FablabKanban.git /home/pi/fablab-kanban
+git clone https://github.com/bocchidayo/FablabKanban.git /home/fablab/FabLabKanban
 ```
 
 #### 2. Servidor HTTP persistente (nginx — recomendado)
@@ -131,7 +134,7 @@ Crea `/etc/nginx/sites-available/fablab-kanban`:
 ```nginx
 server {
     listen 5000;
-    root /home/pi/fablab-kanban;
+    root /home/fablab/FabLabKanban;
     index index.html;
 
     location / {
@@ -149,6 +152,25 @@ sudo systemctl start nginx
 
 nginx arranca automáticamente con el sistema. No se necesita ningún comando adicional.
 
+#### 2b. Servicio de persistencia (sidecar)
+
+El archivo `data.json` lo gestiona un servicio Python que corre junto a nginx.
+
+```bash
+sudo cp /home/fablab/FabLabKanban/deploy/fablab-kanban-data.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now fablab-kanban-data
+```
+
+Añade el bloque `location /api/` (ver `deploy/nginx-api-snippet.conf`) dentro del `server { ... }` de nginx y asegúrate de que nginx arranque después del sidecar:
+
+```bash
+sudo systemctl edit nginx   # añade:  [Unit]\n  Wants=fablab-kanban-data.service\n  After=fablab-kanban-data.service
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+> ⚠️ El bloque `/api/` no está activo hasta que **recargas nginx**. No te saltes ese paso.
+
 <details>
 <summary>Alternativa: Python + systemd</summary>
 
@@ -161,7 +183,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 -m http.server 5000
-WorkingDirectory=/home/pi/fablab-kanban
+WorkingDirectory=/home/fablab/FabLabKanban
 Restart=always
 User=pi
 
@@ -208,6 +230,15 @@ La app se abrirá automáticamente en pantalla completa al arrancar.
 6. Ve a **Miembros registrados**: añade a los integrantes reales del equipo (nombre, iniciales y color de avatar).
 7. Ve a **Contraseña maestra**: cambia `admin` por una contraseña segura.
 8. Cierra el panel de administración. El tablero está listo para usar.
+
+#### Migrar datos existentes (de localStorage a archivo)
+
+Si ya tenías datos en el navegador y acabas de actualizar a la versión con persistencia en archivo:
+
+1. Despliega el código, copia y arranca el servicio `fablab-kanban-data`, y recarga nginx (pasos arriba).
+2. Abre la app: mostrará un tablero vacío (nueva instalación).
+3. Abre **Ajustes** (contraseña) → **Importar JSON** → elige tu copia de seguridad (`fablab-utp-AAAA-MM-DD.json`).
+4. Confirma. Los datos quedan en `data.json`. Haz copias de seguridad copiando ese archivo.
 
 ---
 
