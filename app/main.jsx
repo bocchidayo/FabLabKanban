@@ -311,6 +311,7 @@ function App({ initialState }) {
         }
         if (targetCol === "done") moved.completedAt = Date.now();
         else delete moved.completedAt;
+        if (targetCol !== "backlog" && moved.scheduledFor) moved.scheduledFor = null;
         moved.col = targetCol;
       }
 
@@ -330,6 +331,19 @@ function App({ initialState }) {
       cards: s.cards.map(c => c.id === cardId ? { ...c, ...updates } : c),
     }));
     setEditingCard(null);
+  }
+
+  async function handleWakeNow(cardId) {
+    const newState = {
+      ...state,
+      cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
+    };
+    setState(newState);
+    try {
+      await FabData.saveNow(newState);
+    } catch (e) {
+      // saveNow failure is non-fatal — debounced save will retry
+    }
   }
 
   function archiveCompletedCard(s, card) {
@@ -453,6 +467,7 @@ function App({ initialState }) {
               onSave={editCard}
               onDelete={deleteCard}
               onReassign={reassignCard}
+              onWakeNow={handleWakeNow}
             />
           : null}
 

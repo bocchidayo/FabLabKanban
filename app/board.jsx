@@ -5,6 +5,7 @@ const {
   MACHINES, MACHINE_ORDER, COLUMNS,
   fmtDuration, fmtAgo, progressOf,
   isOverdue, overdueMins, isStaleBacklog, isReadyNudged,
+  isSleeping, fmtWakeDate,
 } = window.FabData;
 
 const t = window.I18n ? window.I18n.t : function(k) { return k; };
@@ -253,9 +254,10 @@ function MemberStrip({ members, cards, lang }) {
 // ---------------------------------------------------------------------------
 function FilterTabs({ filter, setFilter, cards, lang }) {
   const counts = React.useMemo(() => {
-    const c = { all: (cards || []).length };
+    const awake = (cards || []).filter(c => !isSleeping(c, Date.now()));
+    const c = { all: awake.length };
     MACHINE_ORDER.forEach((id) => { c[id] = 0; });
-    (cards || []).forEach((card) => {
+    awake.forEach((card) => {
       if (card.machine && c[card.machine] !== undefined) {
         c[card.machine] += 1;
       }
@@ -308,6 +310,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   const overdue = isOverdue && isOverdue(card, now);
   const staleBacklog = isStaleBacklog && isStaleBacklog(card, now);
   const readyNudge = isReadyNudged && isReadyNudged(card, now);
+  const sleeping = isSleeping && isSleeping(card, now);
   const progress = col === 'inprogress' && progressOf ? progressOf(card, now) : null;
   const elapsed = col === 'inprogress' && startedAt ? fmtDuration(now - startedAt) : null;
   const paused = col === 'inprogress' && member && !member.checkedIn;
@@ -319,6 +322,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   if (done) classes.push('done');
   if (overdue) classes.push('overdue');
   if (staleBacklog) classes.push('stale');
+  if (sleeping) classes.push('sleeping');
   if (readyNudge) classes.push('ready-nudge');
   if (paused) classes.push('paused');
   if (dnd && dnd.draggingId === id) classes.push('dragging');
@@ -346,7 +350,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   let dragProps = {};
   if (dnd) {
     dragProps = {
-      draggable: true,
+      draggable: !sleeping,
       onDragStart: (e) => {
         e.dataTransfer.setData('text/plain', id);
         dnd.onDragStart && dnd.onDragStart(id, e);
@@ -389,6 +393,13 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
         </div>
       )}
 
+      {/* Sleeping wake label */}
+      {sleeping && (
+        <div className="sleeping-marker">
+          <Icon name="moon" />{' '}
+          {t('card.sleeping', lang).replace('{date}', fmtWakeDate ? fmtWakeDate(card.scheduledFor, now, lang) : card.scheduledFor)}
+        </div>
+      )}
       {/* Stale backlog marker */}
       {staleBacklog && (
         <div className="stale-marker">
@@ -456,6 +467,57 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
 }
 
 // ---------------------------------------------------------------------------
+// SleepingDrawer — collapsible footer strip for sleeping backlog cards
+// ---------------------------------------------------------------------------
+function SleepingDrawer({ cards, memberMap, now, lang, selectedCardId, onCardClick }) {
+  const [open, setOpen] = React.useState(false);
+  const prevLen = React.useRef(0);
+
+  React.useEffect(function () {
+    if (prevLen.current === 0 && cards.length > 0) {
+      setOpen(false);
+    }
+    prevLen.current = cards.length;
+  }, [cards.length]);
+
+  if (cards.length === 0) return null;
+
+  const label = t('backlog.sleeping_drawer', lang).replace('{n}', cards.length);
+  const hideLabel = t('backlog.sleeping_drawer_hide', lang);
+
+  return (
+    <div className="sleeping-drawer">
+      <button
+        className="sleeping-drawer-toggle"
+        onClick={() => setOpen(function(v) { return !v; })}
+      >
+        {open ? hideLabel : label}
+      </button>
+      {open && (
+        <div className="sleeping-drawer-cards">
+          {cards.map(function(card) {
+            return (
+              <Card
+                key={card.id}
+                card={card}
+                member={memberMap[card.owner]}
+                assistantMembers={(card.assistants || []).map(function(id) { return memberMap[id]; }).filter(Boolean)}
+                now={now}
+                lang={lang}
+                isSelected={selectedCardId === card.id}
+                onClick={onCardClick}
+                onClaimStart={null}
+                dnd={null}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Column — one column on the board
 // ---------------------------------------------------------------------------
 function Column({
@@ -465,6 +527,10 @@ function Column({
   const [dragOver, setDragOver] = React.useState(false);
   const dropRef = React.useRef(null);
   const bodyRef = React.useRef(null);
+
+  const isBL = col.id === 'backlog';
+  const awakeCards    = isBL ? (cards || []).filter(function(c) { return !isSleeping(c, now); }) : (cards || []);
+  const sleepingCards = isBL ? (cards || []).filter(function(c) {  return  isSleeping(c, now); }) : [];
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -503,17 +569,16 @@ function Column({
       <div className="column-head">
         <span className="hdot" style={{ backgroundColor: col.color }} />
         <span className="ttl">{t('col.' + col.id, lang)}</span>
-        <span className="ct">{(cards || []).length}</span>
+        <span className="ct">{awakeCards.length}</span>
       </div>
 
       {/* Scrollable card area */}
       <div className="column-body" ref={bodyRef}>
-        {(cards || []).length === 0 && (
+        {awakeCards.length === 0 && sleepingCards.length === 0 && (
           <div className="col-empty">{t('col.empty', lang)}</div>
         )}
-        {(cards || []).map((card) => (
+        {awakeCards.map((card) => (
           <React.Fragment key={card.id}>
-            {/* Drop-line indicator when dragging over this position */}
             {dnd && dnd.draggingId && dnd.draggingId !== card.id && (
               <div
                 className="drop-line"
@@ -533,6 +598,16 @@ function Column({
             />
           </React.Fragment>
         ))}
+        {isBL && (
+          <SleepingDrawer
+            cards={sleepingCards}
+            memberMap={memberMap}
+            now={now}
+            lang={lang}
+            selectedCardId={selectedCardId}
+            onCardClick={onCardClick}
+          />
+        )}
       </div>
 
       {/* Add task button */}

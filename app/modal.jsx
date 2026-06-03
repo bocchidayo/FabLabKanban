@@ -52,6 +52,7 @@
     var onSave       = props.onSave;
     var onDelete     = props.onDelete;
     var onReassign   = props.onReassign;
+    var onWakeNow    = props.onWakeNow;
     var isEdit       = !!editingCard;
     var members      = state.members;
     var lang         = state.lang || 'en';
@@ -82,12 +83,48 @@
     var _showDelete   = useState(false);
     var showDelete    = _showDelete[0]; var setShowDelete = _showDelete[1];
 
+    var _scheduleOn     = useState(isEdit && editingCard && !!editingCard.scheduledFor);
+    var _scheduleOffset = useState(null);
+    var _customWeeks    = useState(1);
+
+    var scheduleOn     = _scheduleOn[0];     var setScheduleOn     = _scheduleOn[1];
+    var scheduleOffset = _scheduleOffset[0]; var setScheduleOffset = _scheduleOffset[1];
+    var customWeeks    = _customWeeks[0];    var setCustomWeeks    = _customWeeks[1];
+
     var titleRef = useRef(null);
 
     // column label for header subtitle
     var colLabel = t('col.' + (editingCard ? editingCard.col : (defaultCol || 'backlog')), lang);
 
     var valid = owner && title.trim() && desc.trim();
+
+    var isBacklogCard = isEdit
+      ? (editingCard && editingCard.col === 'backlog')
+      : (!defaultCol || defaultCol === 'backlog');
+
+    var existingWakeDate = isEdit && editingCard ? (editingCard.scheduledFor || null) : null;
+
+    function computeScheduledFor(offset, weeks) {
+      var d = new Date();
+      if (offset === '1w')          d.setDate(d.getDate() + 7);
+      else if (offset === '2w')     d.setDate(d.getDate() + 14);
+      else if (offset === '1mo') {
+        var mo = d.getMonth() + 1;
+        var yr = d.getFullYear() + (mo > 11 ? 1 : 0);
+        mo = mo % 12;
+        var lastDay = new Date(yr, mo + 1, 0).getDate();
+        d.setFullYear(yr, mo, Math.min(d.getDate(), lastDay));
+      }
+      else if (offset === 'custom') d.setDate(d.getDate() + (weeks || 1) * 7);
+      else return null;
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    var previewDate = scheduleOn
+      ? (scheduleOffset ? computeScheduledFor(scheduleOffset, customWeeks) : existingWakeDate)
+      : null;
 
     // ---- focus title on mount -------------------------------------------
     useEffect(function () {
@@ -109,6 +146,7 @@
         machine: machine,
         priority: priority,
         estMin: displayToMinutes(estMin, unit) || 120,
+        scheduledFor: scheduleOn ? (previewDate || existingWakeDate) : null,
       };
 
       if (isEdit) {
@@ -333,6 +371,74 @@
                 ),
               ),
             ),
+
+            // Schedule for later
+            isBacklogCard ? React.createElement("div", { className: "schedule-section" },
+
+              // Toggle row
+              React.createElement("div", { className: "schedule-toggle-row" },
+                React.createElement("span", { className: "schedule-toggle-label" },
+                  t('field.schedule_later', lang)
+                ),
+                React.createElement("input", {
+                  type: "checkbox",
+                  checked: scheduleOn,
+                  onChange: function(e) {
+                    setScheduleOn(e.target.checked);
+                    if (!e.target.checked) { setScheduleOffset(null); setCustomWeeks(1); }
+                  },
+                }),
+              ),
+
+              // Wake now — only for sleeping cards being edited
+              (isEdit && editingCard && editingCard.scheduledFor && scheduleOn)
+                ? React.createElement("button", {
+                    className: "wake-now-btn",
+                    type: "button",
+                    onClick: function() {
+                      onWakeNow && onWakeNow(editingCard.id);
+                      onClose();
+                    },
+                  },
+                    t('field.wake_now', lang)
+                  )
+                : null,
+
+              // Offset buttons
+              scheduleOn ? React.createElement("div", { className: "schedule-offsets" },
+                ['1w', '2w', '1mo', 'custom'].map(function(opt) {
+                  var label = t('field.schedule_' + opt, lang);
+                  return React.createElement("button", {
+                    key: opt,
+                    type: "button",
+                    className: "schedule-offset-btn" + (scheduleOffset === opt ? " active" : ""),
+                    onClick: function() { setScheduleOffset(opt); setCustomWeeks(1); },
+                  }, label);
+                })
+              ) : null,
+
+              // Custom weeks input
+              (scheduleOn && scheduleOffset === 'custom')
+                ? React.createElement("div", { className: "schedule-custom-row" },
+                    t('field.schedule_in_x_weeks', lang).replace('{n}', ''),
+                    React.createElement("input", {
+                      className: "input",
+                      type: "number",
+                      min: 1,
+                      value: customWeeks,
+                      onChange: function(e) { setCustomWeeks(Math.max(1, parseInt(e.target.value) || 1)); },
+                    }),
+                  )
+                : null,
+
+              // Wake preview label
+              (scheduleOn && previewDate)
+                ? React.createElement("div", { className: "schedule-wakes-label" },
+                    t('field.schedule_wakes', lang).replace('{date}', previewDate)
+                  )
+                : null,
+
+            ) : null,
           ),
 
           /* ---- delete confirmation ---- */

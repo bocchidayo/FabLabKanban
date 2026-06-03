@@ -174,8 +174,10 @@
     });
     (state.cards || []).forEach(function (c) { if (!c.estMin) c.estMin = 120; });
     (state.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+    (state.cards || []).forEach(function (c) { if (!('scheduledFor' in c)) c.scheduledFor = null; });
     (state.archived || []).forEach(function (day) {
       (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+      (day.cards || []).forEach(function (c) { if (!('scheduledFor' in c)) c.scheduledFor = null; });
     });
     if (!state.attendance) state.attendance = [];
     (state.members || []).forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
@@ -306,7 +308,8 @@
   function uid() { return "x" + Math.random().toString(36).slice(2, 9); }
 
   function fmtHHMM(date) {
-    return date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+    var d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   // ---- overdue / stale helpers -----------------------------------------
@@ -324,12 +327,37 @@
 
   function isStaleBacklog(card, now) {
     if (card.col !== "backlog") return false;
+    if (isSleeping(card, now)) return false;
     return (now - card.createdAt) > 3 * 24 * 60 * 60 * 1000;
   }
 
   function isReadyNudged(card, now) {
     if (card.col !== "ready") return false;
+    if (isSleeping(card, now)) return false;
     return (now - card.createdAt) > 24 * 60 * 60 * 1000;
+  }
+
+  function isSleeping(card, now) {
+    if (!card.scheduledFor) return false;
+    var d = new Date(now || Date.now());
+    var today = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    return card.scheduledFor > today;
+  }
+
+  function fmtWakeDate(scheduledFor, now, lang) {
+    var d = new Date(now || Date.now());
+    var todayKey = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    var todayMs = new Date(todayKey + 'T00:00:00').getTime();
+    var wakeMs  = new Date(scheduledFor + 'T00:00:00').getTime();
+    var diff    = Math.round((wakeMs - todayMs) / 86400000);
+    if (diff <= 6) return 'in ' + diff + 'd';
+    var wake   = new Date(scheduledFor + 'T12:00:00');
+    var locale = lang === 'es' ? 'es-ES' : 'en-US';
+    return wake.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
   // ---- daily reset -----------------------------------------------------
@@ -348,6 +376,14 @@
     var doneCards = state.cards.filter(function (c) { return c.col === 'done'; });
     var activeCards = state.cards.filter(function (c) { return c.col !== 'done'; });
     var completedTasks = (state.completedTasks || []).slice();
+
+    // 1b. Wake sleeping cards whose scheduledFor date has arrived
+    activeCards = activeCards.map(function (c) {
+      if (c.scheduledFor && !isSleeping(c, now)) {
+        return Object.assign({}, c, { scheduledFor: null });
+      }
+      return c;
+    });
 
     if (doneCards.length > 0) {
       var enriched = doneCards.map(function (c) {
@@ -419,6 +455,8 @@
     todayStr: todayStr,
     performDailyReset: performDailyReset,
     getTodayDone: getTodayDone,
+    isSleeping: isSleeping,
+    fmtWakeDate: fmtWakeDate,
     fmtHHMM: fmtHHMM,
   };
 })();
