@@ -34,7 +34,7 @@ function SchemaVersionScreen({ message }) {
       </div>
       <div style={{ font: "400 15px/1.5 Figtree, sans-serif", color: "var(--text-2)",
         maxWidth: 480 }}>
-        {message}
+        {message || "Actualiza la aplicación. / Update the application."}
       </div>
     </div>
   );
@@ -494,6 +494,7 @@ function AppRoot() {
   React.useEffect(() => {
     let cancelled = false;
     setPhase("loading");
+    setSchemaError(null);
     window.FabData.load()
       .then(s => { if (!cancelled) { setInitial(s); setPhase("ready"); } })
       .catch(e => {
