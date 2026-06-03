@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import time
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 
 class StateStore:
@@ -82,3 +83,78 @@ class StateStore:
         files = sorted(self._backup_files(), key=os.path.getmtime)
         while len(files) > self.backup_keep:
             os.remove(files.pop(0))
+
+
+def make_handler(store, serve_static=True, directory=None):
+    """Build an http.server handler bound to a given StateStore."""
+
+    class Handler(SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=directory, **kwargs)
+
+        def log_message(self, *args):  # keep the journal quiet
+            pass
+
+        def _send_json(self, code, obj):
+            body = json.dumps(obj).encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            if self.path == "/api/state":
+                try:
+                    exists, text = store.read()
+                except ValueError:
+                    return self._send_json(500, {"error": "corrupt data file"})
+                if not exists:
+                    self.send_response(204)
+                    self.end_headers()
+                    return
+                body = text.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if serve_static:
+                return super().do_GET()
+            self.send_response(404)
+            self.end_headers()
+
+        def do_POST(self):
+            if self.path == "/api/state":
+                length = int(self.headers.get("Content-Length", 0) or 0)
+                raw = self.rfile.read(length).decode("utf-8") if length else ""
+                try:
+                    store.write(raw)
+                except ValueError:
+                    return self._send_json(400, {"error": "invalid JSON"})
+                except OSError:
+                    return self._send_json(500, {"error": "write failed"})
+                return self._send_json(200, {"ok": True})
+            self.send_response(404)
+            self.end_headers()
+
+    return Handler
+
+
+def main():
+    root = os.path.dirname(os.path.abspath(__file__))
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", "5001"))
+    store = StateStore(root)
+    handler = make_handler(store, serve_static=True, directory=root)
+    httpd = ThreadingHTTPServer((host, port), handler)
+    print("FabLab persistence: serving %s on http://%s:%d" % (root, host, port))
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        httpd.shutdown()
+
+
+if __name__ == "__main__":
+    main()

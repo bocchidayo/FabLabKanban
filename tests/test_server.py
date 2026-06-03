@@ -1,7 +1,10 @@
 import json
 import os
 import tempfile
+import threading
 import unittest
+import urllib.error
+import urllib.request
 
 from server import StateStore
 
@@ -114,6 +117,62 @@ class StateStoreBackupTest(unittest.TestCase):
             self.clock.t += 400.0
             self.store.write('{"v": %d}' % i)
         self.assertEqual(len(self._backup_files()), 3)  # backup_keep=3
+
+
+from http.server import ThreadingHTTPServer
+from server import make_handler
+
+
+class ApiIntegrationTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.store = StateStore(self.tmp.name)
+        handler = make_handler(self.store, serve_static=False)
+        self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.port = self.httpd.server_address[1]
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self):
+        self.httpd.shutdown()
+        self.httpd.server_close()
+        self.tmp.cleanup()
+
+    def _url(self):
+        return "http://127.0.0.1:%d/api/state" % self.port
+
+    def _get(self):
+        try:
+            with urllib.request.urlopen(self._url()) as r:
+                return r.status, r.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode("utf-8")
+
+    def _post(self, body):
+        req = urllib.request.Request(
+            self._url(), data=body.encode("utf-8"), method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, r.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode("utf-8")
+
+    def test_get_missing_returns_204(self):
+        status, _ = self._get()
+        self.assertEqual(status, 204)
+
+    def test_post_then_get_roundtrip(self):
+        status, _ = self._post('{"lab": "FabLab"}')
+        self.assertEqual(status, 200)
+        status, body = self._get()
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)["lab"], "FabLab")
+
+    def test_post_invalid_json_returns_400(self):
+        status, _ = self._post("{bad")
+        self.assertEqual(status, 400)
 
 
 if __name__ == "__main__":
