@@ -1,7 +1,31 @@
 const IDLE_MS = 3 * 60 * 1000;
+const t = window.I18n ? window.I18n.t : function (k) { return k; };
 
-function App() {
-  const [state, setState] = React.useState(() => window.FabData.load());
+function LoadingScreen() {
+  return (
+    <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center",
+      justifyContent: "center", background: "var(--bg)", color: "var(--text-2)",
+      font: "600 18px/1.4 Figtree, sans-serif" }}>
+      Cargando… / Loading…
+    </div>
+  );
+}
+
+function ErrorScreen({ onRetry }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column",
+      gap: 16, alignItems: "center", justifyContent: "center", background: "var(--bg)",
+      color: "var(--text-1)", textAlign: "center", padding: 24 }}>
+      <div style={{ font: "700 20px/1.3 Figtree, sans-serif" }}>
+        No se pudo conectar con el servicio de datos.<br />Could not reach the data service.
+      </div>
+      <button className="btn btn-accent" onClick={onRetry}>Reintentar / Retry</button>
+    </div>
+  );
+}
+
+function App({ initialState }) {
+  const [state, setState] = React.useState(initialState);
   const [screen, setScreen] = React.useState("board"); // "board" | "admin"
   const [filter, setFilter] = React.useState("all");
   const [modalCol, setModalCol] = React.useState(null); // null | columnId
@@ -15,8 +39,25 @@ function App() {
   const [showCheatsheet, setShowCheatsheet] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
 
-  // Persist state on every change
-  React.useEffect(() => { window.FabData.save(state); }, [state]);
+  // Persist state on every change (skip the first, freshly-loaded value)
+  const firstSaveSkipped = React.useRef(false);
+  React.useEffect(() => {
+    if (!firstSaveSkipped.current) { firstSaveSkipped.current = true; return; }
+    window.FabData.save(state);
+  }, [state]);
+
+  // Track save failures for the banner
+  const [saveError, setSaveError] = React.useState(false);
+  React.useEffect(() => {
+    function onErr() { setSaveError(true); }
+    function onOk() { setSaveError(false); }
+    window.addEventListener("fabdata:saveerror", onErr);
+    window.addEventListener("fabdata:saved", onOk);
+    return () => {
+      window.removeEventListener("fabdata:saveerror", onErr);
+      window.removeEventListener("fabdata:saved", onOk);
+    };
+  }, []);
 
   // Live clock — ticks every second
   React.useEffect(() => {
@@ -365,6 +406,13 @@ function App() {
 
   return (
     <React.Fragment>
+      {saveError && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 300,
+          background: "var(--danger, #e23c34)", color: "#fff", textAlign: "center",
+          padding: "6px 12px", font: "600 13px/1.4 Figtree, sans-serif" }}>
+          {t('app.save_failed', state.lang || 'es')}
+        </div>
+      )}
       <Board
         state={state} now={now} filter={filter} setFilter={setFilter}
         onCheckIn={checkIn}
@@ -421,4 +469,23 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+function AppRoot() {
+  const [phase, setPhase] = React.useState("loading"); // loading | ready | error
+  const [initial, setInitial] = React.useState(null);
+  const [attempt, setAttempt] = React.useState(0);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setPhase("loading");
+    window.FabData.load()
+      .then(s => { if (!cancelled) { setInitial(s); setPhase("ready"); } })
+      .catch(() => { if (!cancelled) setPhase("error"); });
+    return () => { cancelled = true; };
+  }, [attempt]);
+
+  if (phase === "loading") return <LoadingScreen />;
+  if (phase === "error") return <ErrorScreen onRetry={() => setAttempt(a => a + 1)} />;
+  return <App initialState={initial} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<AppRoot />);
