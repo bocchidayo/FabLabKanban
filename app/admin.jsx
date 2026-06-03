@@ -833,7 +833,7 @@ function Admin({ state, setState, onClose }) {
   const handleStartFresh = () => {
     if (confirm(t('admin.fresh_confirm', lang))) {
       const fresh = FabData.buildEmpty(state.machines, state.lang);
-      FabData.saveNow(fresh);
+      FabData.saveNow(fresh).catch(() => {});
       setState(fresh);
       setPasswordValue(fresh.password || '');
     }
@@ -843,7 +843,7 @@ function Admin({ state, setState, onClose }) {
   const handleSeedInit = () => {
     if (confirm(t('admin.seed_confirm', lang))) {
       const fresh = FabData.buildSeed();
-      FabData.saveNow(fresh);
+      FabData.saveNow(fresh).catch(() => {});
       setState(fresh);
       setPasswordValue(fresh.password || '');
     }
