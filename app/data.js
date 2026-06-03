@@ -7,7 +7,13 @@
    objects — components see updates through their references.
    ============================================================ */
 (function () {
-  const STORAGE_KEY = "fablab_utp_v3";
+  // ---- persistence config ----------------------------------------------
+  const API_URL = "/api/state";
+  const SAVE_DEBOUNCE_MS = 750;
+  const LOAD_RETRIES = 5;
+  const LOAD_RETRY_DELAY_MS = 1000;
+
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
   // ---- machine definitions (mutable — syncMachines updates these) ------
   const MACHINES = {};
@@ -142,54 +148,50 @@
     };
   }
 
+  // ---- migrations (run on any loaded or imported state) ----------------
+  function migrate(state) {
+    if (!state.lastReset) state.lastReset = todayStr();
+    if (!state.machines || !state.machines.length) state.machines = clone(SEED_MACHINES);
+    if (!state.idleMinutes) state.idleMinutes = 3;
+    if (!state.lang) state.lang = "en";
+    (state.machines || []).forEach(function (m) {
+      if (m.color && m.color.indexOf("var(") === 0) {
+        var found = SEED_MACHINES.find(function (s) { return s.id === m.id; });
+        if (found) m.color = found.color;
+      }
+    });
+    (state.cards || []).forEach(function (c) { if (!c.estMin) c.estMin = 120; });
+    (state.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+    (state.archived || []).forEach(function (day) {
+      (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+    });
+    if (!state.attendance) state.attendance = [];
+    (state.members || []).forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
+    if (!state.completedTasks) state.completedTasks = state.archived || [];
+    if (!state.cancelledTasks) state.cancelledTasks = [];
+    delete state.archived;
+    syncMachines(state.machines);
+    return state;
+  }
+
   // ---- persist ---------------------------------------------------------
-  function load() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      // Migrate from v2 if v3 key is missing
-      if (!raw) {
-        raw = localStorage.getItem("fablab_utp_v2");
-      }
-      if (raw) {
-        var state = JSON.parse(raw);
-        // Migrations
-        if (!state.lastReset) state.lastReset = todayStr();
-        if (!state.machines || !state.machines.length) state.machines = clone(SEED_MACHINES);
-        if (!state.idleMinutes) state.idleMinutes = 3;
-        if (!state.lang) state.lang = "en";
-        // Convert CSS-var colours to hex on existing machines
-        (state.machines || []).forEach(function (m) {
-          if (m.color && m.color.indexOf("var(") === 0) {
-            var found = SEED_MACHINES.find(function (s) { return s.id === m.id; });
-            if (found) m.color = found.color;
-          }
-        });
-        // Ensure all cards have estMin
-        (state.cards || []).forEach(function (c) { if (!c.estMin) c.estMin = 120; });
-        // Ensure all cards have assistants
-        (state.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
-        (state.archived || []).forEach(function (day) {
-          (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
-        });
-        // Ensure attendance log exists
-        if (!state.attendance) state.attendance = [];
-        // Ensure all members have checkedInAt
-        state.members.forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
-        // Rename archived → completedTasks; delete old key to prevent localStorage bloat
-        if (!state.completedTasks) {
-          state.completedTasks = state.archived || [];
+  async function load() {
+    var lastErr = null;
+    for (var attempt = 0; attempt < LOAD_RETRIES; attempt++) {
+      try {
+        var res = await fetch(API_URL, { method: "GET", cache: "no-store" });
+        if (res.status === 204) {
+          return buildEmpty(clone(SEED_MACHINES), 'es');  // first run
         }
-        if (!state.cancelledTasks) state.cancelledTasks = [];
-        delete state.archived;
-        // Sync globals so components see the loaded machines
-        syncMachines(state.machines);
-        save(state);
-        return state;
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        var state = await res.json();
+        return migrate(state);
+      } catch (e) {
+        lastErr = e;
+        if (attempt < LOAD_RETRIES - 1) await delay(LOAD_RETRY_DELAY_MS);
       }
-    } catch (e) { /* ignore */ }
-    var empty = buildEmpty(clone(SEED_MACHINES), 'es');
-    save(empty);
-    return empty;
+    }
+    throw lastErr || new Error("load failed");  // caller shows error+Retry; never seeds
   }
 
   function save(state) {
