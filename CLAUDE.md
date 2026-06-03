@@ -104,6 +104,11 @@ running `server.py` (Node 22+ has native `fetch`/`Blob`; stub `window`/`CustomEv
   existing patterns, don't restructure unrelated code.
 - **Deployment paths:** the Pi user is `fablab`; the project lives at
   `/home/fablab/FabLabKanban`. Keep `deploy/` and the READMEs consistent with that.
+- **Data schema rules:** `data.json` schema changes must be **additive-only** — new
+  fields with a default in `migrate()` only. Never rename, remove, restructure, or
+  change the type of an existing field. Bump `SCHEMA_VERSION` in `app/data.js`
+  whenever any schema change is made. If a task requires a breaking change, **stop
+  and flag it to the human** before touching the schema or `migrate()`.
 
 ## Workflow notes
 
