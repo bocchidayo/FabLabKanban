@@ -195,8 +195,20 @@ can't gate the browser. Use belt-and-suspenders:
 
 ## Deployment Changes (README update)
 
-- New systemd unit `fablab-kanban-data.service` (runs `python3 server.py` in the project
-  dir, `Restart=always`, `User=fablab`/`pi`).
+- **`server.py` lives in the project root** (`/home/fablab/FabLabKanban/server.py`),
+  alongside `index.html` and `app/`. Keeping it in-repo means `git pull` updates it like
+  any other file — consistent with how the rest of the project is managed.
+- `data.json` and `backups/` live in that **same project root**
+  (`/home/fablab/FabLabKanban/`), next to the app files (and are git-ignored).
+- New systemd unit `fablab-kanban-data.service`:
+  - `ExecStart=/usr/bin/python3 server.py`
+  - `WorkingDirectory=/home/fablab/FabLabKanban`  ← so `data.json`/`backups/` resolve here
+  - `User=fablab`
+  - `Restart=always`
+  - `WantedBy=multi-user.target`
+- ⚠️ Runbook ordering is load-bearing: the sidecar must be started **and** nginx reloaded
+  **before** opening the app — the `/api/` proxy block is not live until nginx reloads, so
+  don't skip that step.
 - nginx config: add `location /api/ { proxy_pass http://127.0.0.1:5001; }` and the
   `Wants=`/`After=` ordering on the nginx unit.
 - Migration runbook:
@@ -211,7 +223,7 @@ can't gate the browser. Use belt-and-suspenders:
 
 | File                         | Change |
 |------------------------------|--------|
-| `server.py` (new)            | Python-stdlib persistence sidecar + dev static server |
+| `server.py` (new, project root) | Python-stdlib persistence sidecar + dev static server; runs from `/home/fablab/FabLabKanban` |
 | `app/data.js`                | `load`/`save`/`reset` → async HTTP; debounce; retry; sendBeacon |
 | `app/main.jsx`               | async bootstrap, loading/error/Retry gates, save ref-guard |
 | `app/admin.jsx`              | Import JSON button + handler |
