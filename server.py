@@ -31,3 +31,20 @@ class StateStore:
             text = f.read()
         json.loads(text)  # validate; json.JSONDecodeError is a subclass of ValueError
         return (True, text)
+
+    def write(self, text):
+        """Validate JSON, back up the previous file (throttled), then atomically replace.
+
+        Raises ValueError on invalid JSON (caller maps to HTTP 400).
+        """
+        json.loads(text)  # validate before touching disk
+        self._backup_if_due()
+        with open(self.tmp_path, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(self.tmp_path, self.data_path)  # atomic swap (safe on SD cards)
+
+    def _backup_if_due(self):
+        """No-op for now; throttled backups added in Task 3."""
+        return
