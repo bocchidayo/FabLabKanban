@@ -791,19 +791,49 @@ function Admin({ state, setState, onClose }) {
     URL.revokeObjectURL(url);
   };
 
+  const importInputRef = React.useRef(null);
+
+  const handleImportClick = () => {
+    if (importInputRef.current) {
+      importInputRef.current.value = "";  // allow re-importing the same filename
+      importInputRef.current.click();
+    }
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(reader.result); }
+      catch (err) { alert(t('admin.import_error', lang)); return; }
+      if (!confirm(t('admin.import_confirm', lang))) return;
+      const migrated = FabData.migrate(parsed);
+      FabData.saveNow(migrated)
+        .then(() => {
+          setState(migrated);
+          setPasswordValue(migrated.password || '');
+        })
+        .catch(() => alert(t('admin.import_error', lang)));
+    };
+    reader.readAsText(file);
+  };
+
   // ---- Reset demo data ---------------------------------------------------
   const handleReset = () => {
     if (confirm(t('admin.reset_confirm', lang))) {
-      const fresh = FabData.reset();
-      setState(fresh);
-      setPasswordValue(fresh.password || '');
+      FabData.reset().then(fresh => {
+        setState(fresh);
+        setPasswordValue(fresh.password || '');
+      });
     }
   };
 
   const handleStartFresh = () => {
     if (confirm(t('admin.fresh_confirm', lang))) {
       const fresh = FabData.buildEmpty(state.machines, state.lang);
-      FabData.save(fresh);
+      FabData.saveNow(fresh);
       setState(fresh);
       setPasswordValue(fresh.password || '');
     }
@@ -813,7 +843,7 @@ function Admin({ state, setState, onClose }) {
   const handleSeedInit = () => {
     if (confirm(t('admin.seed_confirm', lang))) {
       const fresh = FabData.buildSeed();
-      FabData.save(fresh);
+      FabData.saveNow(fresh);
       setState(fresh);
       setPasswordValue(fresh.password || '');
     }
@@ -1021,6 +1051,14 @@ function Admin({ state, setState, onClose }) {
               <div className="export-row">
                 <button className="btn btn-accent" onClick={exportCSV}>{t('admin.export_csv', lang)}</button>
                 <button className="btn btn-accent" onClick={exportJSON}>{t('admin.export_json', lang)}</button>
+                <button className="btn btn-accent" onClick={handleImportClick}>{t('admin.import_json', lang)}</button>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  style={{ display: 'none' }}
+                  onChange={handleImportFile}
+                />
               </div>
               <button
                 className="btn"
