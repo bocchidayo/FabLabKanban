@@ -1,5 +1,9 @@
 .claude/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Local data backups / exports — never commit lab data
 fablab-utp-*.json
 fablab-utp-*.csv
@@ -7,5 +11,6 @@ fablab-utp-*.csv
 
 # Server-side persisted state (runtime data, not source)
 data.json
+data.json.tmp
 data.json.bak
 backups/

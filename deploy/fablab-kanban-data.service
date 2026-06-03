@@ -1,0 +1,16 @@
+[Unit]
+Description=FabLab Kanban persistence sidecar (data.json API)
+After=network.target
+
+[Service]
+Type=simple
+User=fablab
+WorkingDirectory=/home/fablab/FabLabKanban
+ExecStart=/usr/bin/python3 server.py
+Environment=HOST=127.0.0.1
+Environment=PORT=5001
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
