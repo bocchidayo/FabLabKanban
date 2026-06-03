@@ -310,6 +310,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   const readyNudge = isReadyNudged && isReadyNudged(card, now);
   const progress = col === 'inprogress' && progressOf ? progressOf(card, now) : null;
   const elapsed = col === 'inprogress' && startedAt ? fmtDuration(now - startedAt) : null;
+  const paused = col === 'inprogress' && member && !member.checkedIn;
   const done = col === 'done';
 
   // --- Class list ---
@@ -319,6 +320,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   if (overdue) classes.push('overdue');
   if (staleBacklog) classes.push('stale');
   if (readyNudge) classes.push('ready-nudge');
+  if (paused) classes.push('paused');
   if (dnd && dnd.draggingId === id) classes.push('dragging');
 
   // Rim style for in-progress cards with a machine
@@ -416,6 +418,13 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
         </div>
       )}
 
+      {/* Paused marker — owner not checked in */}
+      {paused && (
+        <div className="paused-marker">
+          <Icon name="clock-pause" /> {t('card.paused', lang)}
+        </div>
+      )}
+
       {/* Card footer */}
       <div className="card-foot">
         {visibleMembers.length > 0 && (
@@ -427,7 +436,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
         {member && <span className="owner">{member.name || ''}</span>}
         <div className="card-foot-spacer" />
         <Icon name={tsIcon} />
-        {' '}<span className="ts">{fmtAgo ? fmtAgo(ts, now) : ts}</span>
+        {' '}<span className="ts">{fmtAgo ? fmtAgo(ts, now, lang) : ts}</span>
       </div>
 
       {/* Batch 2 — Claim & start button (only for Ready cards) */}

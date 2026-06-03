@@ -278,19 +278,22 @@
   // ---- helpers ---------------------------------------------------------
   function fmtDuration(ms) {
     var mins = Math.max(0, Math.floor(ms / 60000));
-    var h = Math.floor(mins / 60);
+    var d = Math.floor(mins / 1440);
+    var h = Math.floor((mins % 1440) / 60);
     var m = mins % 60;
+    if (d > 0) return d + "d " + h + "h";
     if (h > 0) return h + "h " + m + "m";
     return m + "m";
   }
 
-  function fmtAgo(ts, now) {
+  function fmtAgo(ts, now, lang) {
     var mins = Math.max(0, Math.floor((now - ts) / 60000));
-    if (mins < 1) return "just now";
-    if (mins < 60) return mins + "m ago";
+    var es = lang === 'es';
+    if (mins < 1) return es ? 'ahora' : 'just now';
+    if (mins < 60) return es ? 'hace ' + mins + 'm' : mins + 'm ago';
     var h = Math.floor(mins / 60);
-    if (h < 24) return h + "h ago";
-    return Math.floor(h / 24) + "d ago";
+    if (h < 24) return es ? 'hace ' + h + 'h' : h + 'h ago';
+    return es ? 'hace ' + Math.floor(h / 24) + 'd' : Math.floor(h / 24) + 'd ago';
   }
 
   function progressOf(card, now) {
@@ -331,7 +334,10 @@
 
   // ---- daily reset -----------------------------------------------------
   function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    var d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
   }
 
   function performDailyReset(state, now) {

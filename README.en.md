@@ -17,13 +17,14 @@ A static web application that lets a FabLab team manage tasks and equipment in r
 - Filter by machine type (laser, 3D print, CNC, electronics, software)
 - Drag-and-drop cards between columns
 - Visual priority indicators (high / mid / low)
-- Progress bar on active cards with elapsed time
-- Automatic alerts: overdue cards and stale backlogs
+- Progress bar on active cards with elapsed time (supports durations from minutes to months)
+- Automatic alerts: overdue cards, stale backlogs, and **paused** cards when the owner is away
 - **Claim & Start** button on "Ready" cards to start a task in one click
 
 **Member check-in**
 - Lab members register their presence via the check-in menu in the top bar
 - Cards display the assigned member's avatar
+- In Progress cards show an **Owner away** indicator when the assigned member has checked out
 
 **Screensaver**
 - Activates automatically after a configurable idle timeout (default 3 min)
@@ -73,7 +74,7 @@ FablabKanban/
 ├── index.html          # Entry point; loads dependencies and app scripts
 └── app/
     ├── styles.css      # All styles (CSS variables, components)
-    ├── data.js         # Data layer: state, localStorage, utilities
+    ├── data.js         # Data layer: async load/save, migrations, utilities
     ├── i18n.js         # ES / EN translations
     ├── board.jsx       # Board, columns, cards, TopBar, filters
     ├── modal.jsx       # Create / edit task modal

@@ -392,24 +392,10 @@ function App({ initialState }) {
   }
 
   function claimStart(cardId) {
-    // If no one is checked in, prompt to pick a member
     if (!checkedInMemberId) {
-      const checkedIn = state.members.filter(m => m.checkedIn);
-      if (checkedIn.length === 0) {
-        // Just use the card's current owner
-        const card = state.cards.find(c => c.id === cardId);
-        if (card) {
-          moveCard(cardId, "inprogress", null);
-        }
-        return;
-      }
-      // Use the first checked-in member
-      const firstCheckedIn = checkedIn[0].id;
-      setState(s => ({
-        ...s,
-        cards: s.cards.map(c => c.id === cardId ? { ...c, owner: firstCheckedIn } : c),
-      }));
-      moveCard(cardId, "inprogress", null);
+      // No one checked in this session — move to In Progress without changing owner
+      const card = state.cards.find(c => c.id === cardId);
+      if (card) moveCard(cardId, "inprogress", null);
       return;
     }
     // Assign to the checked-in member and move to In Progress

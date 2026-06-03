@@ -25,6 +25,23 @@
     { id: "low",  label: "Low",  color: "var(--p-low)"  },
   ];
 
+  function bestDurationUnit(mins) {
+    if (mins % 1440 === 0) return 'd';
+    if (mins % 60 === 0) return 'h';
+    return 'min';
+  }
+  function durationToDisplay(mins, unit) {
+    if (unit === 'd') return mins / 1440;
+    if (unit === 'h') return mins / 60;
+    return mins;
+  }
+  function displayToMinutes(val, unit) {
+    var n = parseInt(val, 10) || 1;
+    if (unit === 'd') return n * 1440;
+    if (unit === 'h') return n * 60;
+    return n;
+  }
+
   // ============================================================ CardModal
   function CardModal(props) {
     var state        = props.state;
@@ -45,7 +62,9 @@
     var _desc     = useState(isEdit && editingCard ? editingCard.desc || "" : "");
     var _machine  = useState(isEdit && editingCard ? editingCard.machine || null : null);
     var _priority = useState(isEdit && editingCard ? editingCard.priority || "mid" : "mid");
-    var _estMin   = useState(isEdit && editingCard ? editingCard.estMin || 120 : 120);
+    var _initUnit = (isEdit && editingCard) ? bestDurationUnit(editingCard.estMin || 120) : 'h';
+    var _unit     = useState(_initUnit);
+    var _estMin   = useState((isEdit && editingCard) ? durationToDisplay(editingCard.estMin || 120, _initUnit) : 2);
     var _assistants = useState(isEdit && editingCard ? (editingCard.assistants || []) : []);
 
     var owner    = _owner[0];    var setOwner    = _owner[1];
@@ -53,6 +72,7 @@
     var desc     = _desc[0];     var setDesc      = _desc[1];
     var machine  = _machine[0];  var setMachine   = _machine[1];
     var priority = _priority[0]; var setPriority  = _priority[1];
+    var unit     = _unit[0];     var setUnit      = _unit[1];
     var estMin   = _estMin[0];   var setEstMin    = _estMin[1];
     var assistants = _assistants[0]; var setAssistants = _assistants[1];
 
@@ -88,7 +108,7 @@
         desc: desc.trim(),
         machine: machine,
         priority: priority,
-        estMin: parseInt(estMin, 10) || 120,
+        estMin: displayToMinutes(estMin, unit) || 120,
       };
 
       if (isEdit) {
@@ -291,23 +311,26 @@
 
             // Est. duration
             React.createElement("div", { className: "field" },
-              React.createElement("label", null,
-                t('field.est_duration', lang),
-                React.createElement("span", { className: "hint" }, t('field.minutes', lang)),
-              ),
+              React.createElement("label", null, t('field.est_duration', lang)),
               React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
                 React.createElement("input", {
                   className: "input",
                   type: "number",
-                  placeholder: t('field.est_placeholder', lang),
                   min: 1,
                   value: estMin,
                   onChange: function (e) { setEstMin(e.target.value); },
-                  style: { width: "120px" },
+                  style: { width: "100px" },
                 }),
-                React.createElement("span", {
-                  style: { fontSize: "13px", fontWeight: 600, color: "var(--text-3)" },
-                }, t('field.minutes', lang)),
+                React.createElement("select", {
+                  className: "input",
+                  value: unit,
+                  onChange: function (e) { setUnit(e.target.value); },
+                  style: { width: "72px" },
+                },
+                  React.createElement("option", { value: "min" }, t('field.minutes', lang)),
+                  React.createElement("option", { value: "h" },   t('field.hours', lang)),
+                  React.createElement("option", { value: "d" },   t('field.days', lang)),
+                ),
               ),
             ),
           ),
