@@ -138,8 +138,13 @@ HTTP. The seed/migration/helper logic is otherwise reused unchanged.
   rapid state changes from drag/edit interactions).
 - Register a `beforeunload` handler that flushes any pending save via
   `navigator.sendBeacon('/api/state', blob)` so a close/reload doesn't lose the last edit.
-- On `POST` failure: surface a visible "save failed / retrying" state (reuse the
-  existing `saver` UI indicator) and keep retrying. Never silently drop a change.
+- On `POST` failure: surface a visible "save failed — retrying" state and keep retrying.
+  Never silently drop a change. **Note:** the existing `saver` state in `main.jsx` is the
+  **screensaver** toggle, NOT a save indicator — do not reuse it. Add a new lightweight
+  save-status banner driven by save events (see below).
+- **Save events:** `data.js` emits `window` CustomEvents so the UI can react without
+  coupling: `fabdata:saving`, `fabdata:saved`, `fabdata:saveerror`. `main.jsx` listens
+  and renders a small unobtrusive banner only while saving is failing/retrying.
 
 ### `reset()` → async
 
