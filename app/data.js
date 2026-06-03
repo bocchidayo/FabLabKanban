@@ -194,9 +194,66 @@
     throw lastErr || new Error("load failed");  // caller shows error+Retry; never seeds
   }
 
-  function save(state) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  var _saveTimer = null;
+  var _pendingText = null;
+
+  function _emit(name) {
+    try { window.dispatchEvent(new CustomEvent(name)); } catch (e) {}
   }
+
+  function _postState(text) {
+    return fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: text,
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res;
+    });
+  }
+
+  function _scheduleFlush() {
+    if (_saveTimer != null) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function () { _saveTimer = null; _flush(); }, SAVE_DEBOUNCE_MS);
+  }
+
+  function _flush() {
+    if (_pendingText == null) return;
+    var text = _pendingText;
+    _pendingText = null;
+    _emit("fabdata:saving");
+    _postState(text)
+      .then(function () { _emit("fabdata:saved"); })
+      .catch(function () {
+        _emit("fabdata:saveerror");
+        if (_pendingText == null) _pendingText = text;  // keep newest if a newer save arrived
+        _scheduleFlush();                                 // retry after debounce window
+      });
+  }
+
+  function save(state) {
+    _pendingText = JSON.stringify(state);
+    _scheduleFlush();
+  }
+
+  function saveNow(state) {
+    if (_saveTimer != null) { clearTimeout(_saveTimer); _saveTimer = null; }
+    _pendingText = null;
+    var text = JSON.stringify(state);
+    _emit("fabdata:saving");
+    return _postState(text)
+      .then(function () { _emit("fabdata:saved"); })
+      .catch(function (e) { _emit("fabdata:saveerror"); throw e; });
+  }
+
+  // Flush any pending debounced save on tab close/reload.
+  window.addEventListener("beforeunload", function () {
+    if (_pendingText != null && navigator.sendBeacon) {
+      var blob = new Blob([_pendingText], { type: "application/json" });
+      navigator.sendBeacon(API_URL, blob);
+      _pendingText = null;
+    }
+  });
 
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
