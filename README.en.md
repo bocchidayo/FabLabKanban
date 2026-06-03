@@ -118,7 +118,7 @@ open http://localhost:5000
 #### 1. Clone onto the Raspberry Pi
 
 ```bash
-git clone https://github.com/bocchidayo/FablabKanban.git /home/pi/fablab-kanban
+git clone https://github.com/bocchidayo/FablabKanban.git /home/fablab/FabLabKanban
 ```
 
 #### 2. Persistent HTTP server (nginx — recommended)
@@ -134,7 +134,7 @@ Create `/etc/nginx/sites-available/fablab-kanban`:
 ```nginx
 server {
     listen 5000;
-    root /home/pi/fablab-kanban;
+    root /home/fablab/FabLabKanban;
     index index.html;
 
     location / {
@@ -183,7 +183,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 -m http.server 5000
-WorkingDirectory=/home/pi/fablab-kanban
+WorkingDirectory=/home/fablab/FabLabKanban
 Restart=always
 User=pi
 
