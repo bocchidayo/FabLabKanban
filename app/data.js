@@ -1,6 +1,6 @@
 /* ============================================================
    FABLAB UTP — mock data layer (stands in for SQLite)
-   Persisted to localStorage under a versioned key.
+   Persisted via /api/state (server-side JSON file).
 
    v3 — adds: configurable machine types, idle timeout,
    board name editing. MACHINES/MACHINE_ORDER are now mutable
@@ -255,9 +255,10 @@
     }
   });
 
-  function reset() {
-    localStorage.removeItem(STORAGE_KEY);
-    return load();
+  async function reset() {
+    var empty = buildEmpty(clone(SEED_MACHINES), 'es');
+    await saveNow(empty);
+    return empty;
   }
 
   // ---- helpers ---------------------------------------------------------
@@ -380,6 +381,8 @@
     AVATAR_COLORS: AVATAR_COLORS,
     load: load,
     save: save,
+    saveNow: saveNow,
+    migrate: migrate,
     reset: reset,
     buildSeed: buildSeed,
     buildEmpty: buildEmpty,
