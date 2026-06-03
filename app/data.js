@@ -126,7 +126,7 @@
       completedTasks: [],
       cancelledTasks: [],
       attendance: [],
-      lastReset: todayStr,
+      lastReset: todayStr(),
       lang: "en",
       schemaVersion: SCHEMA_VERSION,
     };
