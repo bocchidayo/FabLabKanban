@@ -332,6 +332,19 @@ function App({ initialState }) {
     setEditingCard(null);
   }
 
+  async function handleWakeNow(cardId) {
+    const newState = {
+      ...state,
+      cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
+    };
+    setState(newState);
+    try {
+      await FabData.saveNow(newState);
+    } catch (e) {
+      // saveNow failure is non-fatal — debounced save will retry
+    }
+  }
+
   function archiveCompletedCard(s, card) {
     const overtime = !!(card.startedAt && card.completedAt && card.estMin &&
       (new Date(card.completedAt) - new Date(card.startedAt)) > card.estMin * 60000);
@@ -453,6 +466,7 @@ function App({ initialState }) {
               onSave={editCard}
               onDelete={deleteCard}
               onReassign={reassignCard}
+              onWakeNow={handleWakeNow}
             />
           : null}
 
