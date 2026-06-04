@@ -297,6 +297,22 @@ function App({ initialState }) {
   }
 
   function moveCard(cardId, targetCol, beforeId) {
+    // Note: claimStart also calls moveCard internally — that path does NOT
+    // trigger the undo toast. Do not add it without thinking through the
+    // startedAt timestamp implications first.
+    if (targetCol === 'done') {
+      const card = state.cards.find(c => c.id === cardId);
+      if (card) {
+        pushUndoToast({
+          type: 'done',
+          cardId,
+          prevCol: card.col,
+          prevCompletedAt: null,
+          prevStartedAt: card.col === 'inprogress' ? card.startedAt : undefined,
+          label: t('undo.moved_to_done', state.lang).replace('{title}', card.title),
+        });
+      }
+    }
     setState(s => {
       const cards = [...s.cards];
       const idx = cards.findIndex(c => c.id === cardId);
