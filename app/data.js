@@ -308,7 +308,8 @@
   function uid() { return "x" + Math.random().toString(36).slice(2, 9); }
 
   function fmtHHMM(date) {
-    return date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+    var d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   // ---- overdue / stale helpers -----------------------------------------
@@ -394,7 +395,7 @@
     }
 
     // 2. Close all open attendance sessions
-    var checkOutTime = fmtHHMM(now instanceof Date ? now : new Date(now));
+    var checkOutTime = fmtHHMM(now);
     var attendance = (state.attendance || []).map(function (e) {
       return e.checkOut === null ? Object.assign({}, e, { checkOut: checkOutTime }) : e;
     });
