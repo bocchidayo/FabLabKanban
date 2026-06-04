@@ -108,7 +108,13 @@
       var d = new Date();
       if (offset === '1w')          d.setDate(d.getDate() + 7);
       else if (offset === '2w')     d.setDate(d.getDate() + 14);
-      else if (offset === '1mo')    d.setMonth(d.getMonth() + 1);
+      else if (offset === '1mo') {
+        var mo = d.getMonth() + 1;
+        var yr = d.getFullYear() + (mo > 11 ? 1 : 0);
+        mo = mo % 12;
+        var lastDay = new Date(yr, mo + 1, 0).getDate();
+        d.setFullYear(yr, mo, Math.min(d.getDate(), lastDay));
+      }
       else if (offset === 'custom') d.setDate(d.getDate() + (weeks || 1) * 7);
       else return null;
       return d.getFullYear() + '-' +
@@ -379,7 +385,7 @@
                   checked: scheduleOn,
                   onChange: function(e) {
                     setScheduleOn(e.target.checked);
-                    if (!e.target.checked) setScheduleOffset(null);
+                    if (!e.target.checked) { setScheduleOffset(null); setCustomWeeks(1); }
                   },
                 }),
               ),
