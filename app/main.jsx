@@ -333,11 +333,11 @@ function App({ initialState }) {
   }
 
   async function handleWakeNow(cardId) {
-    const newState = {
-      ...state,
-      cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
-    };
-    setState(newState);
+    let newState;
+    setState(s => {
+      newState = { ...s, cards: s.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c) };
+      return newState;
+    });
     try {
       await FabData.saveNow(newState);
     } catch (e) {
