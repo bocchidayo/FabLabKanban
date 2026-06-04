@@ -656,6 +656,8 @@ function Admin({ state, setState, onClose }) {
     return () => clearTimeout(t);
   }, [machineSaved]);
 
+  const importInputRef = React.useRef(null);
+
   // ---- Locked: show login ------------------------------------------------
   if (!unlocked) {
     return (
@@ -790,8 +792,6 @@ function Admin({ state, setState, onClose }) {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const importInputRef = React.useRef(null);
 
   const handleImportClick = () => {
     if (importInputRef.current) {
