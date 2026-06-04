@@ -83,6 +83,9 @@
     "action.delete":             { en: "Delete",                   es: "Eliminar" },
     "action.delete_confirm":     { en: "Yes, delete",              es: "Sí, eliminar" },
     "action.delete_warning":     { en: "Delete this task? This cannot be undone.", es: "¿Eliminar esta tarea? No se puede deshacer." },
+    "action.undo":               { en: "Undo",                     es: "Deshacer" },
+    "undo.woke_card":            { en: "Woke \"{title}\"",         es: "Despertada \"{title}\"" },
+    "undo.moved_to_done":        { en: "Moved \"{title}\" to Done", es: "\"{title}\" movida a Hecho" },
 
     "kbd.esc_cancel":            { en: "Esc to cancel",            es: "Esc para cancelar" },
 

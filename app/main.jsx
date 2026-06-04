@@ -54,6 +54,7 @@ function App({ initialState }) {
   const [cancellingCard, setCancellingCard] = React.useState(null);
   const [showCheatsheet, setShowCheatsheet] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
+  const [undoToast, setUndoToast] = React.useState(null);
 
   // Persist state on every change (skip the first, freshly-loaded value)
   const firstSaveSkipped = React.useRef(false);
@@ -124,6 +125,7 @@ function App({ initialState }) {
 
   // ---- BATCH 1: Idle detection for screensaver ----
   const idleRef = React.useRef(null);
+  const undoTimerRef = React.useRef(null);
   React.useEffect(() => {
     const IDLE_MS = (state.idleMinutes || 3) * 60 * 1000;
     function reset() {
@@ -295,6 +297,22 @@ function App({ initialState }) {
   }
 
   function moveCard(cardId, targetCol, beforeId) {
+    // Note: claimStart also calls moveCard internally — that path does NOT
+    // trigger the undo toast. Do not add it without thinking through the
+    // startedAt timestamp implications first.
+    if (targetCol === 'done') {
+      const card = state.cards.find(c => c.id === cardId);
+      if (card && card.col !== 'done') {
+        pushUndoToast({
+          type: 'done',
+          cardId,
+          prevCol: card.col,
+          prevCompletedAt: null,
+          prevStartedAt: card.col === 'inprogress' ? card.startedAt : undefined,
+          label: t('undo.moved_to_done', state.lang).replace('{title}', card.title),
+        });
+      }
+    }
     setState(s => {
       const cards = [...s.cards];
       const idx = cards.findIndex(c => c.id === cardId);
@@ -334,6 +352,14 @@ function App({ initialState }) {
   }
 
   async function handleWakeNow(cardId) {
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) return;
+    pushUndoToast({
+      type: 'wake',
+      cardId,
+      scheduledFor: card.scheduledFor,
+      label: t('undo.woke_card', state.lang).replace('{title}', card.title),
+    });
     const newState = {
       ...state,
       cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
@@ -343,6 +369,45 @@ function App({ initialState }) {
       await FabData.saveNow(newState);
     } catch (e) {
       // saveNow failure is non-fatal — debounced save will retry
+    }
+  }
+
+  function pushUndoToast(toast) {
+    clearTimeout(undoTimerRef.current);
+    const timerId = setTimeout(() => setUndoToast(null), 10_000);
+    undoTimerRef.current = timerId;
+    setUndoToast(toast);
+  }
+
+  function handleUndo() {
+    clearTimeout(undoTimerRef.current);
+    const toast = undoToast;
+    setUndoToast(null);
+    if (!toast) return;
+    const card = state.cards.find(c => c.id === toast.cardId);
+    if (!card) return; // card removed by concurrent action during toast window
+    if (toast.type === 'wake') {
+      setState(s => ({
+        ...s,
+        cards: s.cards.map(c =>
+          c.id === toast.cardId ? { ...c, scheduledFor: toast.scheduledFor } : c
+        ),
+      }));
+    } else if (toast.type === 'done') {
+      setState(s => ({
+        ...s,
+        cards: s.cards.map(c => {
+          if (c.id !== toast.cardId) return c;
+          const restored = { ...c, col: toast.prevCol };
+          delete restored.completedAt;
+          if (toast.prevStartedAt) {
+            restored.startedAt = toast.prevStartedAt;
+          } else if (toast.prevCol !== 'inprogress') {
+            delete restored.startedAt;
+          }
+          return restored;
+        }),
+      }));
     }
   }
 
@@ -445,6 +510,8 @@ function App({ initialState }) {
         selectedCardId={selectedCardId}
         setSelectedCardId={setSelectedCardId}
       />
+
+      <UndoToast toast={undoToast} onUndo={handleUndo} lang={state.lang} />
 
       {modalCol && (
         <CardModal
