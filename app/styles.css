@@ -392,6 +392,77 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
   padding-left: 12px;
 }
 
+/* ---- sleeping cards ---- */
+.card.sleeping {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.card.sleeping:hover { border-color: var(--border-strong); opacity: 0.75; }
+.sleeping-marker {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-3);
+}
+.sleeping-marker .i { font-size: 13px; }
+
+.sleeping-drawer {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+.sleeping-drawer-toggle {
+  width: 100%;
+  background: none; border: none; cursor: pointer;
+  padding: 6px 4px;
+  font-size: 12px; font-weight: 600; color: var(--text-3);
+  text-align: left;
+  display: flex; align-items: center; gap: 6px;
+  border-radius: 6px;
+}
+.sleeping-drawer-toggle:hover { color: var(--text-2); background: var(--column); }
+.sleeping-drawer-cards {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 6px;
+}
+
+.schedule-section {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px;
+  background: var(--column); border-radius: 8px;
+}
+.schedule-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.schedule-toggle-label {
+  font-size: 14px; font-weight: 600; color: var(--text-1);
+}
+.schedule-offsets {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.schedule-offset-btn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--bg);
+  font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-2);
+}
+.schedule-offset-btn.active {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+}
+.schedule-custom-row {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2);
+}
+.schedule-custom-row .input { width: 64px; }
+.schedule-wakes-label {
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+}
+.wake-now-btn {
+  padding: 8px 16px;
+  background: var(--column); border: 1.5px solid var(--border);
+  border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+  color: var(--text-1);
+  width: 100%;
+}
+.wake-now-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 /* ---- batch 2: keyboard cheatsheet ---- */
 .cheatsheet-overlay {
   position: fixed; inset: 0; z-index: 250;
