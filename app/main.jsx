@@ -302,7 +302,7 @@ function App({ initialState }) {
     // startedAt timestamp implications first.
     if (targetCol === 'done') {
       const card = state.cards.find(c => c.id === cardId);
-      if (card) {
+      if (card && card.col !== 'done') {
         pushUndoToast({
           type: 'done',
           cardId,
