@@ -174,8 +174,10 @@
     });
     (state.cards || []).forEach(function (c) { if (!c.estMin) c.estMin = 120; });
     (state.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+    (state.cards || []).forEach(function (c) { if (!('scheduledFor' in c)) c.scheduledFor = null; });
     (state.archived || []).forEach(function (day) {
       (day.cards || []).forEach(function (c) { if (!c.assistants) c.assistants = []; });
+      (day.cards || []).forEach(function (c) { if (!('scheduledFor' in c)) c.scheduledFor = null; });
     });
     if (!state.attendance) state.attendance = [];
     (state.members || []).forEach(function (m) { if (!('checkedInAt' in m)) m.checkedInAt = null; });
@@ -324,11 +326,13 @@
 
   function isStaleBacklog(card, now) {
     if (card.col !== "backlog") return false;
+    if (isSleeping(card, now)) return false;
     return (now - card.createdAt) > 3 * 24 * 60 * 60 * 1000;
   }
 
   function isReadyNudged(card, now) {
     if (card.col !== "ready") return false;
+    if (isSleeping(card, now)) return false;
     return (now - card.createdAt) > 24 * 60 * 60 * 1000;
   }
 
@@ -372,6 +376,14 @@
     var activeCards = state.cards.filter(function (c) { return c.col !== 'done'; });
     var completedTasks = (state.completedTasks || []).slice();
 
+    // 1b. Wake sleeping cards whose scheduledFor date has arrived
+    activeCards = activeCards.map(function (c) {
+      if (c.scheduledFor && !isSleeping(c, now)) {
+        return Object.assign({}, c, { scheduledFor: null });
+      }
+      return c;
+    });
+
     if (doneCards.length > 0) {
       var enriched = doneCards.map(function (c) {
         var overtime = !!(c.startedAt && c.completedAt && c.estMin &&
@@ -382,7 +394,7 @@
     }
 
     // 2. Close all open attendance sessions
-    var checkOutTime = fmtHHMM(now);
+    var checkOutTime = fmtHHMM(now instanceof Date ? now : new Date(now));
     var attendance = (state.attendance || []).map(function (e) {
       return e.checkOut === null ? Object.assign({}, e, { checkOut: checkOutTime }) : e;
     });

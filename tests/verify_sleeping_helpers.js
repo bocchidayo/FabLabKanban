@@ -38,3 +38,48 @@ const r4 = fmtWakeDate('2026-06-12', jun5, 'en'); // 7 days out
 console.assert(!r4.startsWith('in '), '7d → long form: ' + r4);
 
 console.log('All sleeping helper assertions passed');
+
+// migrate() — adds scheduledFor: null to cards missing the field
+const { migrate } = global.window.FabData;
+const stateOld = {
+  schemaVersion: 1,
+  cards: [{ id: 'c1', col: 'backlog', title: 'X', estMin: 60, assistants: [] }],
+  archived: [],
+  members: [],
+};
+const migrated = migrate(stateOld);
+console.assert(migrated.cards[0].scheduledFor === null, 'migrate adds scheduledFor: null');
+
+// isStaleBacklog — sleeping card is never stale
+const { isStaleBacklog } = global.window.FabData;
+const staleNow = new Date('2026-06-04T10:00:00').getTime();
+const oldSleepingCard = {
+  col: 'backlog',
+  scheduledFor: '2026-06-10',
+  createdAt: staleNow - 5 * 24 * 60 * 60 * 1000, // 5 days old
+};
+console.assert(!isStaleBacklog(oldSleepingCard, staleNow), 'sleeping card not stale');
+
+// performDailyReset — wakes cards whose date has arrived
+const { performDailyReset } = global.window.FabData;
+const resetNow = new Date('2026-06-05T00:05:00').getTime(); // just after midnight Jun 5
+const resetState = {
+  lastReset: '2026-06-04',
+  cards: [
+    { id: 'a', col: 'backlog', scheduledFor: '2026-06-05', title: 'Wake me', createdAt: resetNow - 1000, estMin: 60, assistants: [] },
+    { id: 'b', col: 'backlog', scheduledFor: '2026-06-10', title: 'Still sleeping', createdAt: resetNow - 1000, estMin: 60, assistants: [] },
+    { id: 'c', col: 'backlog', scheduledFor: null,         title: 'Already awake', createdAt: resetNow - 1000, estMin: 60, assistants: [] },
+  ],
+  completedTasks: [],
+  attendance: [],
+  members: [],
+};
+const afterReset = performDailyReset(resetState, resetNow);
+const woken   = afterReset.cards.find(c => c.id === 'a');
+const asleep  = afterReset.cards.find(c => c.id === 'b');
+const awake   = afterReset.cards.find(c => c.id === 'c');
+console.assert(woken.scheduledFor === null,        'card woken at midnight');
+console.assert(asleep.scheduledFor === '2026-06-10', 'future card still sleeping');
+console.assert(awake.scheduledFor === null,          'awake card unchanged');
+
+console.log('All data.js assertions passed');
