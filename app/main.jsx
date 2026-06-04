@@ -311,6 +311,7 @@ function App({ initialState }) {
         }
         if (targetCol === "done") moved.completedAt = Date.now();
         else delete moved.completedAt;
+        if (targetCol !== "backlog" && moved.scheduledFor) moved.scheduledFor = null;
         moved.col = targetCol;
       }
 
@@ -333,11 +334,11 @@ function App({ initialState }) {
   }
 
   async function handleWakeNow(cardId) {
-    let newState;
-    setState(s => {
-      newState = { ...s, cards: s.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c) };
-      return newState;
-    });
+    const newState = {
+      ...state,
+      cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
+    };
+    setState(newState);
     try {
       await FabData.saveNow(newState);
     } catch (e) {
