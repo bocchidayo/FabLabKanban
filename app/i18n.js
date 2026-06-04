@@ -32,6 +32,7 @@
     "card.stale":                { en: "stale",                    es: "estancado" },
     "card.overdue_mins":         { en: "+{n} min",                 es: "+{n} min" },
     "card.claim_start":          { en: "Claim & start",            es: "Tomar y empezar" },
+    "card.paused":               { en: "Owner away",               es: "Responsable ausente" },
 
     "priority.high":             { en: "High",                     es: "Alta" },
     "priority.mid":              { en: "Medium",                   es: "Media" },
@@ -65,6 +66,8 @@
     "field.est_duration":        { en: "Est. duration",            es: "Duración est." },
     "field.est_placeholder":     { en: "e.g. 120",                 es: "ej. 120" },
     "field.minutes":             { en: "min",                      es: "min" },
+    "field.hours":               { en: "h",                        es: "h"   },
+    "field.days":                { en: "d",                        es: "d"   },
 
     "field.reassign_owner":      { en: "Owner",                    es: "Responsable" },
     "field.assistants":          { en: "Assistants",               es: "Asistentes" },

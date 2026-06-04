@@ -379,6 +379,13 @@ input, select, textarea { font-family: inherit; font-size: 15px; color: var(--te
 }
 .stale-marker .i { font-size: 13px; }
 
+.paused-marker {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11.5px; font-weight: 600; color: var(--accent);
+}
+.paused-marker .i { font-size: 13px; }
+.card.paused .progress-fill { background-color: var(--text-3) !important; }
+
 .card.ready-nudge {
   border-color: var(--coral);
   border-left: 3px solid var(--coral);

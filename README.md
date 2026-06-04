@@ -17,13 +17,14 @@ Una aplicación web estática que permite al equipo de un FabLab gestionar tarea
 - Filtrado por tipo de máquina (láser, impresión 3D, CNC, electrónica, software)
 - Arrastrar y soltar tarjetas entre columnas
 - Indicadores visuales de prioridad (alta / media / baja)
-- Barra de progreso en tarjetas activas con tiempo transcurrido
-- Alertas automáticas: tarjetas vencidas y backlogs estancados
-- Botón **Reclamar e iniciar** en columna "Listo" para arrancar una tarea con un clic
+- Barra de progreso en tarjetas activas con tiempo transcurrido (soporta duraciones de días a meses)
+- Alertas automáticas: tarjetas vencidas, backlogs estancados, y tarjetas **pausadas** cuando el responsable no está presente
+- Botón **Tomar e iniciar** en columna "Listo" para arrancar una tarea con un clic
 
 **Check-in de miembros**
 - Los miembros del lab registran su presencia mediante el menú de check-in en la barra superior
 - Las tarjetas muestran el avatar del responsable
+- Las tarjetas En Progreso muestran un indicador **Responsable ausente** cuando el dueño no está registrado
 
 **Protector de pantalla**
 - Se activa automáticamente tras el tiempo de inactividad configurado (por defecto 3 min)
@@ -73,7 +74,7 @@ FablabKanban/
 ├── index.html          # Punto de entrada; carga dependencias y scripts
 └── app/
     ├── styles.css      # Todos los estilos (variables CSS, componentes)
-    ├── data.js         # Capa de datos: estado, localStorage, utilidades
+    ├── data.js         # Capa de datos: carga/guardado async, migraciones, utilidades
     ├── i18n.js         # Traducciones ES / EN
     ├── board.jsx       # Tablero, columnas, tarjetas, TopBar, filtros
     ├── modal.jsx       # Modal de crear / editar tarea
