@@ -332,6 +332,29 @@
     return (now - card.createdAt) > 24 * 60 * 60 * 1000;
   }
 
+  function isSleeping(card, now) {
+    if (!card.scheduledFor) return false;
+    var d = new Date(now || Date.now());
+    var today = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    return card.scheduledFor > today;
+  }
+
+  function fmtWakeDate(scheduledFor, now, lang) {
+    var d = new Date(now || Date.now());
+    var todayKey = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    var todayMs = new Date(todayKey + 'T00:00:00').getTime();
+    var wakeMs  = new Date(scheduledFor + 'T00:00:00').getTime();
+    var diff    = Math.round((wakeMs - todayMs) / 86400000);
+    if (diff <= 6) return 'in ' + diff + 'd';
+    var wake   = new Date(scheduledFor + 'T12:00:00');
+    var locale = lang === 'es' ? 'es-ES' : 'en-US';
+    return wake.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
   // ---- daily reset -----------------------------------------------------
   function todayStr() {
     var d = new Date();
@@ -419,6 +442,8 @@
     todayStr: todayStr,
     performDailyReset: performDailyReset,
     getTodayDone: getTodayDone,
+    isSleeping: isSleeping,
+    fmtWakeDate: fmtWakeDate,
     fmtHHMM: fmtHHMM,
   };
 })();
