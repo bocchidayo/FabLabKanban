@@ -359,6 +359,7 @@ function App({ initialState }) {
     clearTimeout(undoTimerRef.current);
     const toast = undoToast;
     setUndoToast(null);
+    if (!toast) return;
     const card = state.cards.find(c => c.id === toast.cardId);
     if (!card) return; // card removed by concurrent action during toast window
     if (toast.type === 'wake') {
