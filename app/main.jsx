@@ -510,6 +510,8 @@ function App({ initialState }) {
         setSelectedCardId={setSelectedCardId}
       />
 
+      <UndoToast toast={undoToast} onUndo={handleUndo} lang={state.lang} />
+
       {modalCol && (
         <CardModal
           state={state} defaultCol={modalCol}
