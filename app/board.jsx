@@ -740,6 +740,21 @@ function Board({
 }
 
 // ---------------------------------------------------------------------------
+// UndoToast — fixed bottom-center toast with a single Undo action
+// ---------------------------------------------------------------------------
+function UndoToast({ toast, onUndo, lang }) {
+  if (!toast) return null;
+  return (
+    <div className="undo-toast">
+      <span className="undo-toast-label">{toast.label}</span>
+      <button className="undo-toast-btn" onClick={onUndo}>
+        {t('action.undo', lang)}
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Expose to global scope
 // ---------------------------------------------------------------------------
-Object.assign(window, { Icon, Avatar, MachineTag, Board });
+Object.assign(window, { Icon, Avatar, MachineTag, Board, UndoToast });
