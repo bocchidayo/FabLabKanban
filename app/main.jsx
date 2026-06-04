@@ -396,16 +396,17 @@ function App({ initialState }) {
     } else if (toast.type === 'done') {
       setState(s => ({
         ...s,
-        cards: s.cards.map(c =>
-          c.id === toast.cardId
-            ? {
-                ...c,
-                col: toast.prevCol,
-                completedAt: toast.prevCompletedAt,
-                ...(toast.prevStartedAt ? { startedAt: toast.prevStartedAt } : {}),
-              }
-            : c
-        ),
+        cards: s.cards.map(c => {
+          if (c.id !== toast.cardId) return c;
+          const restored = { ...c, col: toast.prevCol };
+          delete restored.completedAt;
+          if (toast.prevStartedAt) {
+            restored.startedAt = toast.prevStartedAt;
+          } else if (toast.prevCol !== 'inprogress') {
+            delete restored.startedAt;
+          }
+          return restored;
+        }),
       }));
     }
   }
