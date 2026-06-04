@@ -5,6 +5,7 @@ const {
   MACHINES, MACHINE_ORDER, COLUMNS,
   fmtDuration, fmtAgo, progressOf,
   isOverdue, overdueMins, isStaleBacklog, isReadyNudged,
+  isSleeping, fmtWakeDate,
 } = window.FabData;
 
 const t = window.I18n ? window.I18n.t : function(k) { return k; };
@@ -253,9 +254,10 @@ function MemberStrip({ members, cards, lang }) {
 // ---------------------------------------------------------------------------
 function FilterTabs({ filter, setFilter, cards, lang }) {
   const counts = React.useMemo(() => {
-    const c = { all: (cards || []).length };
+    const awake = (cards || []).filter(c => !isSleeping(c, Date.now()));
+    const c = { all: awake.length };
     MACHINE_ORDER.forEach((id) => { c[id] = 0; });
-    (cards || []).forEach((card) => {
+    awake.forEach((card) => {
       if (card.machine && c[card.machine] !== undefined) {
         c[card.machine] += 1;
       }
@@ -308,6 +310,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   const overdue = isOverdue && isOverdue(card, now);
   const staleBacklog = isStaleBacklog && isStaleBacklog(card, now);
   const readyNudge = isReadyNudged && isReadyNudged(card, now);
+  const sleeping = isSleeping && isSleeping(card, now);
   const progress = col === 'inprogress' && progressOf ? progressOf(card, now) : null;
   const elapsed = col === 'inprogress' && startedAt ? fmtDuration(now - startedAt) : null;
   const paused = col === 'inprogress' && member && !member.checkedIn;
@@ -319,6 +322,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   if (done) classes.push('done');
   if (overdue) classes.push('overdue');
   if (staleBacklog) classes.push('stale');
+  if (sleeping) classes.push('sleeping');
   if (readyNudge) classes.push('ready-nudge');
   if (paused) classes.push('paused');
   if (dnd && dnd.draggingId === id) classes.push('dragging');
@@ -346,7 +350,7 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   let dragProps = {};
   if (dnd) {
     dragProps = {
-      draggable: true,
+      draggable: !sleeping,
       onDragStart: (e) => {
         e.dataTransfer.setData('text/plain', id);
         dnd.onDragStart && dnd.onDragStart(id, e);
@@ -389,6 +393,13 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
         </div>
       )}
 
+      {/* Sleeping wake label */}
+      {sleeping && (
+        <div className="sleeping-marker">
+          <Icon name="moon" />{' '}
+          {t('card.sleeping', lang).replace('{date}', fmtWakeDate ? fmtWakeDate(card.scheduledFor, now, lang) : card.scheduledFor)}
+        </div>
+      )}
       {/* Stale backlog marker */}
       {staleBacklog && (
         <div className="stale-marker">
