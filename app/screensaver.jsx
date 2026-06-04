@@ -147,11 +147,15 @@ function Screensaver({ state, now, onExit }) {
                     {card.title}
                     <div className="jsub">
                       {owner ? owner.name : t('saver.unknown', lang)}
-                      {' '}
-                      <span className="jtag">
-                        <Icon name={machine.icon} />
-                        {' '}{machine.label}
-                      </span>
+                      {card.machine && (
+                        <>
+                          {' '}
+                          <span className="jtag">
+                            <Icon name={machine.icon} />
+                            {' '}{machine.label}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="jbar-wrap">
