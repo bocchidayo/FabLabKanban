@@ -48,8 +48,17 @@ function isSleeping(card, now) {
 }
 
 function fmtWakeDate(scheduledFor, now, lang) {
-  // Returns "in 3d" for ≤6 days out, "Mon Jun 15" for >6 days
   // scheduledFor is "YYYY-MM-DD", now is a timestamp
+  // Only called on cards where isSleeping(card, now) is true,
+  // so scheduledFor is guaranteed to be > today. Never called
+  // for a card waking today (scheduledFor === todayStr) because
+  // isSleeping returns false for that card and it renders as awake.
+  //
+  // Behavior:
+  //   diff = calendar days between today and scheduledFor (always ≥ 1)
+  //   diff ≤ 6  → "in {diff}d"          e.g. "in 3d"
+  //   diff > 6  → "{weekday} {mon} {d}"  e.g. "Mon Jun 15"
+  // Both forms are passed through the card.sleeping i18n key at the call site.
 }
 ```
 
@@ -57,7 +66,14 @@ function fmtWakeDate(scheduledFor, now, lang) {
 
 ### `performDailyReset` change
 
-Add a new step before the existing steps, waking sleeping cards whose date has arrived:
+The wake step operates on `activeCards` (cards where `col !== 'done'`), which is produced by the existing done-card split. The exact sequence is:
+
+1. Split done cards → `doneCards` / `activeCards`
+2. **Wake sleeping cards in `activeCards`** ← new step
+3. Close open attendance sessions
+4. Reset all members' check-in state
+
+The new step (2) maps over `activeCards` and clears `scheduledFor` on any card whose wake date has arrived:
 
 ```js
 activeCards = activeCards.map(function(c) {
@@ -94,6 +110,7 @@ The "Schedule for later" section is shown **only when the card is in the backlog
   - Note for implementation: `field.schedule_in_x_weeks` may double as both the confirmation line and the custom input label — verify during implementation; add a separate key if the rendering differs
 - Selecting an offset shows a confirmation line: "Wakes Mon Jun 15" (date math done visibly)
 - Selected offset is a **single piece of state** — selecting a preset discards any custom value and vice versa; two values cannot be active simultaneously
+- **Toggling off then on again resets the selected offset to no selection** — the previous choice does not linger; the user must pick again
 - On submit: `scheduledFor` is computed from today + offset at submit time
 
 ### Editing an awake backlog card
