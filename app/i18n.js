@@ -263,6 +263,19 @@
     "admin.reload_btn":    { en: "Reload App",                   es: "Recargar aplicación" },
     "admin.reload_desc":   { en: "After running `git pull` on the Pi, click this to apply updates. Your data is safe — code updates never touch browser storage.",
                              es: "Después de ejecutar `git pull` en la Pi, haz clic aquí para aplicar las actualizaciones. Tus datos están seguros: las actualizaciones de código nunca tocan el almacenamiento del navegador." },
+
+    // ---- sleeping cards -------------------------------------------------
+    "backlog.sleeping_drawer":      { en: "↓ {n} scheduled for later",  es: "↓ {n} programadas para después" },
+    "backlog.sleeping_drawer_hide": { en: "↑ hide",                      es: "↑ ocultar" },
+    "field.schedule_later":         { en: "Schedule for later",          es: "Programar para después" },
+    "field.schedule_1w":            { en: "1 week",                      es: "1 semana" },
+    "field.schedule_2w":            { en: "2 weeks",                     es: "2 semanas" },
+    "field.schedule_1mo":           { en: "1 month",                     es: "1 mes" },
+    "field.schedule_custom":        { en: "Custom",                      es: "Personalizado" },
+    "field.schedule_in_x_weeks":    { en: "in {n} weeks",                es: "en {n} semanas" },
+    "field.schedule_wakes":         { en: "Wakes {date}",                es: "Se despierta el {date}" },
+    "field.wake_now":               { en: "Wake now",                    es: "Despertar ahora" },
+    "card.sleeping":                { en: "Wakes {date}",                es: "Se despierta el {date}" },
   };
 
   function t(key, lang) {
