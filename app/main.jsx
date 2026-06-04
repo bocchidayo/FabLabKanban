@@ -54,6 +54,7 @@ function App({ initialState }) {
   const [cancellingCard, setCancellingCard] = React.useState(null);
   const [showCheatsheet, setShowCheatsheet] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
+  const [undoToast, setUndoToast] = React.useState(null);
 
   // Persist state on every change (skip the first, freshly-loaded value)
   const firstSaveSkipped = React.useRef(false);
@@ -124,6 +125,7 @@ function App({ initialState }) {
 
   // ---- BATCH 1: Idle detection for screensaver ----
   const idleRef = React.useRef(null);
+  const undoTimerRef = React.useRef(null);
   React.useEffect(() => {
     const IDLE_MS = (state.idleMinutes || 3) * 60 * 1000;
     function reset() {
@@ -343,6 +345,43 @@ function App({ initialState }) {
       await FabData.saveNow(newState);
     } catch (e) {
       // saveNow failure is non-fatal — debounced save will retry
+    }
+  }
+
+  function pushUndoToast(toast) {
+    clearTimeout(undoTimerRef.current);
+    const timerId = setTimeout(() => setUndoToast(null), 10_000);
+    undoTimerRef.current = timerId;
+    setUndoToast(toast);
+  }
+
+  function handleUndo() {
+    clearTimeout(undoTimerRef.current);
+    const toast = undoToast;
+    setUndoToast(null);
+    const card = state.cards.find(c => c.id === toast.cardId);
+    if (!card) return; // card removed by concurrent action during toast window
+    if (toast.type === 'wake') {
+      setState(s => ({
+        ...s,
+        cards: s.cards.map(c =>
+          c.id === toast.cardId ? { ...c, scheduledFor: toast.scheduledFor } : c
+        ),
+      }));
+    } else if (toast.type === 'done') {
+      setState(s => ({
+        ...s,
+        cards: s.cards.map(c =>
+          c.id === toast.cardId
+            ? {
+                ...c,
+                col: toast.prevCol,
+                completedAt: toast.prevCompletedAt,
+                ...(toast.prevStartedAt ? { startedAt: toast.prevStartedAt } : {}),
+              }
+            : c
+        ),
+      }));
     }
   }
 
