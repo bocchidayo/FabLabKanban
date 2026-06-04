@@ -352,6 +352,14 @@ function App({ initialState }) {
   }
 
   async function handleWakeNow(cardId) {
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) return;
+    pushUndoToast({
+      type: 'wake',
+      cardId,
+      scheduledFor: card.scheduledFor,
+      label: t('undo.woke_card', state.lang).replace('{title}', card.title),
+    });
     const newState = {
       ...state,
       cards: state.cards.map(c => c.id === cardId ? { ...c, scheduledFor: null } : c),
