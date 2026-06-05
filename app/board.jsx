@@ -311,9 +311,9 @@ function Card({ card, member, assistantMembers, now, isSelected, onClick, onClai
   const staleBacklog = isStaleBacklog && isStaleBacklog(card, now);
   const readyNudge = isReadyNudged && isReadyNudged(card, now);
   const sleeping = isSleeping && isSleeping(card, now);
-  const progress = col === 'inprogress' && progressOf ? progressOf(card, now) : null;
-  const elapsed = col === 'inprogress' && startedAt ? fmtDuration(now - startedAt) : null;
   const paused = col === 'inprogress' && member && !member.checkedIn;
+  const progress = col === 'inprogress' && !paused && progressOf ? progressOf(card, now) : null;
+  const elapsed = col === 'inprogress' && !paused && startedAt ? fmtDuration(now - startedAt) : null;
   const done = col === 'done';
 
   // --- Class list ---
