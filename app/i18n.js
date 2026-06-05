@@ -21,7 +21,7 @@
     "filter.all":                { en: "All",                      es: "Todos" },
 
     "col.backlog":               { en: "Backlog",                  es: "Pendientes" },
-    "col.ready":                 { en: "Ready",                    es: "Listo" },
+    "col.ready":                 { en: "Ready",                    es: "Standby" },
     "col.inprogress":            { en: "In Progress",              es: "En Progreso" },
     "col.done":                  { en: "Done",                     es: "Completado" },
 
